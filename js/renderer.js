@@ -3,24 +3,27 @@
 // The painter's algorithm: paint far things first and near things last, so
 // near things cover far ones. In this isometric view "far" means a small
 // gx + gy, so every floor tile, wall and object gets a depth number based on
-// that sum and we draw them sorted by it. The avatar will join this list in
-// the next step.
+// that sum and we draw them sorted by it. The avatar is in the same list,
+// so walls, the table and the maple hide it when it walks behind them.
 import { tileCorners } from './iso.js';
 import { tilesInDrawOrder, tileAt } from './room.js';
 import { drawTile } from './floorRenderer.js';
 import { drawBackWalls, drawLowWall, drawEavePost } from './wallRenderer.js';
 import { drawGround, frontFences } from './ground.js';
 import { drawItem } from './decorRenderer.js';
+import { drawAvatar } from './avatarRenderer.js';
+import { avatarDepth } from './avatar.js';
 import { DECOR, itemTiles } from './decor.js';
 import { fillPolygon, strokePolygon } from './draw.js';
 import { PALETTE as P } from './palette.js';
 
 // Small offsets that decide the order of things at the same gx + gy:
-// floor first, then the hover highlight, then objects, and a front wall
-// last because it stands on the tile's near edge.
-const ORDER = { tile: 0, highlight: 0.1, object: 0.6, wall: 0.8 };
+// floor first, then the hover highlight, then objects, then the avatar (so
+// it sits on top of a cushion), and a front wall last because it stands on
+// the tile's near edge.
+const ORDER = { tile: 0, highlight: 0.1, object: 0.6, avatar: 0.7, wall: 0.8 };
 
-export function drawScene(ctx, room, origin, { hovered, time }) {
+export function drawScene(ctx, room, origin, { hovered, time, avatar }) {
   // Things that are behind everything else don't need sorting.
   drawGround(ctx, room, origin);
   drawBackWalls(ctx, room, origin);
@@ -41,6 +44,7 @@ export function drawScene(ctx, room, origin, { hovered, time }) {
   }
   for (const fence of frontFences(room, origin)) list.push({ depth: fence.depth, draw: () => fence.draw(ctx) });
   list.push({ depth: 7 + ORDER.wall + 0.1, draw: () => drawEavePost(ctx, room, origin) });
+  list.push({ depth: avatarDepth(avatar) + ORDER.avatar, draw: () => drawAvatar(ctx, avatar, origin) });
   if (hovered) {
     const tile = tileAt(room, hovered.gx, hovered.gy);
     list.push({ depth: tile.gx + tile.gy + ORDER.highlight, draw: () => drawHighlight(ctx, tile, origin) });

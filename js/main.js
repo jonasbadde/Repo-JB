@@ -9,6 +9,7 @@ import { MARGIN, SOIL } from './ground.js';
 import { DECOR } from './decor.js';
 import { lightPosition } from './decorRenderer.js';
 import { drawLighting } from './lighting.js';
+import { createAvatar, walkTo, updateAvatar } from './avatar.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -17,6 +18,7 @@ const timeButton = document.getElementById('time-toggle');
 
 const room = createRoom();
 const camera = createCamera();
+const avatar = createAvatar(room, 9, 1); // in the genkan, by the door
 const state = {
   centred: { x: 0, y: 0 }, // where grid (0,0) lands when the building is centred
   origin: { x: 0, y: 0 }, // the same, after scrolling (centred + camera)
@@ -110,7 +112,10 @@ canvas.addEventListener('pointermove', (e) => {
 canvas.addEventListener('pointerleave', () => {
   state.mouse = null;
 });
-attachCamera(canvas, camera, cameraLimits);
+attachCamera(canvas, camera, cameraLimits, (point) => {
+  const tile = pickTile(point);
+  if (tile) walkTo(avatar, room, tile);
+});
 
 function frame(time) {
   const w = window.innerWidth;
@@ -127,7 +132,8 @@ function frame(time) {
   state.hovered = state.mouse ? pickTile(state.mouse) : null;
 
   drawBackdrop(ctx, w, h, state.dusk);
-  drawScene(ctx, room, state.origin, { hovered: state.hovered, time });
+  updateAvatar(avatar, dt);
+  drawScene(ctx, room, state.origin, { hovered: state.hovered, time, avatar });
   const lights = DECOR.filter((item) => item.glow).map((item) => ({
     ...lightPosition(room, item, state.origin),
     glow: item.glow,

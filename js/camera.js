@@ -4,8 +4,12 @@
 // origin before drawing. Dragging, the mouse wheel / trackpad and the arrow
 // keys all change that offset. Nothing in the world moves; we only change
 // where we look from.
+//
+// A press that hardly moves is a click, not a drag: the view only starts
+// scrolling once the pointer has moved more than CLICK_SLOP pixels.
 
 const KEY_STEP = 40; // pixels per arrow-key press
+const CLICK_SLOP = 5; // pixels a press may wander and still count as a click
 
 export function createCamera() {
   return { x: 0, y: 0, drag: null };
@@ -14,9 +18,10 @@ export function createCamera() {
 /**
  * Hook up input. `limits()` must return { x, y }: how far (in pixels) the
  * camera may move from the centre in each direction. It is a function so it
- * can depend on the current window size.
+ * can depend on the current window size. `onClick(point)` is called with
+ * the canvas position of every press that wasn't a drag.
  */
-export function attachCamera(canvas, camera, limits) {
+export function attachCamera(canvas, camera, limits, onClick) {
   const clamp = () => {
     const { x, y } = limits();
     camera.x = Math.max(-x, Math.min(x, camera.x));
@@ -25,12 +30,15 @@ export function attachCamera(canvas, camera, limits) {
 
   // Pointer events cover mouse, pen and touch with the same code.
   canvas.addEventListener('pointerdown', (e) => {
-    camera.drag = { x: e.clientX, y: e.clientY, startX: camera.x, startY: camera.y };
+    camera.drag = { x: e.clientX, y: e.clientY, startX: camera.x, startY: camera.y, moved: false };
     canvas.setPointerCapture(e.pointerId); // keep getting moves even outside the canvas
-    canvas.style.cursor = 'grabbing';
   });
   canvas.addEventListener('pointermove', (e) => {
-    if (!camera.drag) return;
+    const drag = camera.drag;
+    if (!drag) return;
+    if (!drag.moved && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) <= CLICK_SLOP) return;
+    drag.moved = true;
+    canvas.style.cursor = 'grabbing';
     camera.x = camera.drag.startX + (e.clientX - camera.drag.x);
     camera.y = camera.drag.startY + (e.clientY - camera.drag.y);
     clamp();
@@ -39,7 +47,11 @@ export function attachCamera(canvas, camera, limits) {
     camera.drag = null;
     canvas.style.cursor = '';
   };
-  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointerup', (e) => {
+    const wasClick = camera.drag && !camera.drag.moved;
+    endDrag();
+    if (wasClick && onClick) onClick({ x: e.offsetX, y: e.offsetY });
+  });
   canvas.addEventListener('pointercancel', endDrag);
 
   // Wheel and two-finger trackpad scrolling. preventDefault stops the
