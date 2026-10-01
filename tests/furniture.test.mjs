@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { test, finish } from './test.mjs';
 import { createRoom, tileAt } from '../js/room.js';
 import { checkPlace, place, pickUp, itemAt, floorIsConnected, loadLayout, saveLayout } from '../js/furniture.js';
+import { createAvatar, walkTo, updateAvatar, furnitureChanged } from '../js/avatar.js';
 
 const fresh = () => createRoom();
 const byId = (room, id) => room.items.find((i) => i.id === id) || room.tray.find((i) => i.id === id);
@@ -82,6 +83,29 @@ test('a saved layout loads back, and a broken one is ignored', () => {
   const broken = fresh();
   loadLayout(broken);
   assert.equal(itemAt(broken, 3, 2)?.id, 'table'); // a table in the garden: kept the default
+});
+
+test('the avatar finds a new way when furniture blocks its path', () => {
+  const room = fresh();
+  const avatar = createAvatar(room, 3, 3);
+  walkTo(avatar, room, tileAt(room, 0, 9));
+  const blocked = avatar.path.find((t) => t.gx === 2 && t.gy === 7);
+  assert.ok(blocked, 'expected the walk to use the shoe stone');
+  place(room, byId(room, 'andon-1'), 2, 7, 0);
+  furnitureChanged(avatar, room);
+  assert.ok(avatar.path.length && avatar.path.every((t) => t.walkable));
+  assert.deepEqual([avatar.path.at(-1).gx, avatar.path.at(-1).gy], [0, 9]);
+});
+
+test('the avatar stands up when its cushion is picked up', () => {
+  const room = fresh();
+  const avatar = createAvatar(room, 3, 4);
+  walkTo(avatar, room, tileAt(room, 3, 3));
+  updateAvatar(avatar, 2000);
+  assert.ok(avatar.sitting);
+  pickUp(room, byId(room, 'cushion-3'));
+  furnitureChanged(avatar, room);
+  assert.equal(avatar.sitting, false);
 });
 
 test("a saved layout can't put furniture where the avatar starts", () => {
