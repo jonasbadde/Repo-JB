@@ -58,7 +58,7 @@ export function drawScene(ctx, room, origin, { hovered, time, avatar, dots = [],
       const tile = tileAt(room, t.gx, t.gy);
       list.push({ depth: tile.gx + tile.gy + ORDER.highlight, draw: () => strokePolygon(ctx, corners(tile, origin), P.hoverStroke, 2) });
     }
-    if (selected.type === 'cushion') list.push({ depth: depthOf(selected) + ORDER.avatar, draw: () => drawFacing(ctx, room, selected, origin) });
+    if (selected.type === 'cushion') list.push({ depth: depthOf(selected) + ORDER.object + 0.05, draw: () => drawFacing(ctx, room, selected, origin) });
   }
   if (ghost) {
     addGhost(list, ctx, room, ghost, origin);

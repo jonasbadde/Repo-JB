@@ -4,7 +4,7 @@
 import { gridToScreen, pointInPolygon } from './iso.js';
 import { tileAt } from './room.js';
 import { itemSize } from './decor.js';
-import { MOVABLE, checkPlace, place, lift } from './furniture.js';
+import { MOVABLE, ROUND, checkPlace, place, lift } from './furniture.js';
 import { furnitureChanged } from './avatar.js';
 
 // How tall each kind of furniture is, and how far its outline is inset
@@ -14,6 +14,9 @@ const SHAPE = {
   cushion: { height: 5, inset: 0.15 },
   paperLantern: { height: 45, inset: 0.3 },
 };
+
+// The menu floats at least this high, so it clears a sitting avatar's head.
+const MENU_LIFT = 40;
 
 const MESSAGE_TIME = 2500; // ms a "can't place" message stays in the HUD
 
@@ -51,6 +54,19 @@ export function createFurnitureEditor(room, avatar) {
     changed();
   }
 
+  /** Turn the selected item a quarter turn where it stands, if the turned shape fits. */
+  function rotate(item) {
+    const rot = ((item.rot || 0) + 1) % 4;
+    // A cushion keeps the same tile when turned, so it may turn under the avatar.
+    const check = checkPlace(room, item, item.gx, item.gy, rot, item.type === 'cushion' ? [] : avoid());
+    if (!check.ok) {
+      say(`Can't turn it: ${check.reason}`);
+      return;
+    }
+    place(room, item, item.gx, item.gy, rot);
+    changed();
+  }
+
   function cancelMove() {
     const { item, from } = edit.moving;
     // Put it back where it was, unless the avatar has walked onto that spot.
@@ -66,9 +82,15 @@ export function createFurnitureEditor(room, avatar) {
     const item = edit.selected;
     if (!item) return;
     if (action === 'move') startMoving(item);
+    if (action === 'rotate') rotate(item);
   });
 
   window.addEventListener('keydown', (e) => {
+    if (e.key === 'r' || e.key === 'R') {
+      // Turn the item being moved, or the selected one.
+      if (edit.moving && !ROUND.has(edit.moving.item.type) && edit.ghost) edit.ghost.rot = (edit.ghost.rot + 1) % 4;
+      else if (edit.selected && !ROUND.has(edit.selected.type)) rotate(edit.selected);
+    }
     if (e.key === 'Escape') {
       if (edit.moving) cancelMove();
       edit.selected = null;
@@ -110,9 +132,10 @@ export function createFurnitureEditor(room, avatar) {
       const item = edit.selected;
       menu.hidden = !item;
       if (item) {
+        menu.querySelector('[data-action=rotate]').disabled = ROUND.has(item.type);
         const { w, d } = itemSize(item);
         const floor = tileAt(room, item.gx, item.gy).height;
-        const top = gridToScreen(item.gx + w / 2, item.gy + d / 2, origin, floor + SHAPE[item.type].height + 12);
+        const top = gridToScreen(item.gx + w / 2, item.gy + d / 2, origin, floor + Math.max(SHAPE[item.type].height, MENU_LIFT) + 12);
         menu.style.left = `${top.x}px`;
         menu.style.top = `${top.y}px`;
       }
@@ -121,7 +144,10 @@ export function createFurnitureEditor(room, avatar) {
     /** Text for the HUD while editing, or null to show the normal tile info. */
     hudText(now) {
       if (edit.message && now < edit.message.until) return edit.message.text;
-      if (edit.moving) return `Placing ${NAMES[edit.moving.item.type]} · click to put it down · Esc cancels`;
+      if (edit.moving) {
+        const turn = ROUND.has(edit.moving.item.type) ? '' : ' · R turns it';
+        return `Placing ${NAMES[edit.moving.item.type]} · click to put it down${turn} · Esc cancels`;
+      }
       return null;
     },
   };

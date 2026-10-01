@@ -115,11 +115,13 @@ canvas.addEventListener('pointerleave', () => {
   state.mouse = null;
 });
 attachCamera(canvas, camera, cameraLimits, (point) => {
-  // Clicking furniture opens its menu, and the avatar still walks over to
-  // it (or sits down, for a cushion). While moving furniture, a click puts
-  // it down instead.
+  // Clicking furniture opens its menu. Only a cushion also makes the
+  // avatar walk over (to sit on it); the table and lanterns are just
+  // selected, so the avatar doesn't wander into the spot you're arranging.
+  // While moving furniture, a click puts it down instead.
   if (editor.click(point, state.origin)) return;
   const item = editor.edit.selected;
+  if (item && item.type !== 'cushion') return;
   const tile = item ? tileAt(room, item.gx, item.gy) : pickTile(point);
   const tiles = tile && walkTo(avatar, room, tile);
   if (tiles) state.plan = { tiles, shownAt: performance.now() };
