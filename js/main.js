@@ -29,6 +29,7 @@ const state = {
   // a little every frame, so switching fades instead of jumping.
   dusk: 0,
   duskTarget: 0,
+  plan: null, // the last planned walk, { tiles, shownAt }, drawn as fading dots
   lastTime: 0,
 };
 
@@ -114,8 +115,19 @@ canvas.addEventListener('pointerleave', () => {
 });
 attachCamera(canvas, camera, cameraLimits, (point) => {
   const tile = pickTile(point);
-  if (tile) walkTo(avatar, room, tile);
+  const tiles = tile && walkTo(avatar, room, tile);
+  if (tiles) state.plan = { tiles, shownAt: performance.now() };
 });
+
+const DOT_FADE = 1600; // ms the planned path stays visible
+
+/** The planned path as [{ tile, alpha }], fading out after a click. */
+function pathDots(time) {
+  if (!state.plan) return [];
+  const alpha = 0.9 * (1 - (time - state.plan.shownAt) / DOT_FADE);
+  if (alpha <= 0) return [];
+  return state.plan.tiles.map((tile) => ({ tile, alpha }));
+}
 
 function frame(time) {
   const w = window.innerWidth;
@@ -133,7 +145,7 @@ function frame(time) {
 
   drawBackdrop(ctx, w, h, state.dusk);
   updateAvatar(avatar, dt);
-  drawScene(ctx, room, state.origin, { hovered: state.hovered, time, avatar });
+  drawScene(ctx, room, state.origin, { hovered: state.hovered, time, avatar, dots: pathDots(time) });
   const lights = DECOR.filter((item) => item.glow).map((item) => ({
     ...lightPosition(room, item, state.origin),
     glow: item.glow,

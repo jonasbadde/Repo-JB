@@ -11,7 +11,7 @@ import { drawTile } from './floorRenderer.js';
 import { drawBackWalls, drawLowWall, drawEavePost } from './wallRenderer.js';
 import { drawGround, frontFences } from './ground.js';
 import { drawItem } from './decorRenderer.js';
-import { drawAvatar } from './avatarRenderer.js';
+import { drawAvatar, drawPathDot } from './avatarRenderer.js';
 import { avatarDepth } from './avatar.js';
 import { DECOR, itemTiles } from './decor.js';
 import { fillPolygon, strokePolygon } from './draw.js';
@@ -23,7 +23,7 @@ import { PALETTE as P } from './palette.js';
 // the tile's near edge.
 const ORDER = { tile: 0, highlight: 0.1, object: 0.6, avatar: 0.7, wall: 0.8 };
 
-export function drawScene(ctx, room, origin, { hovered, time, avatar }) {
+export function drawScene(ctx, room, origin, { hovered, time, avatar, dots = [] }) {
   // Things that are behind everything else don't need sorting.
   drawGround(ctx, room, origin);
   drawBackWalls(ctx, room, origin);
@@ -45,6 +45,10 @@ export function drawScene(ctx, room, origin, { hovered, time, avatar }) {
   for (const fence of frontFences(room, origin)) list.push({ depth: fence.depth, draw: () => fence.draw(ctx) });
   list.push({ depth: 7 + ORDER.wall + 0.1, draw: () => drawEavePost(ctx, room, origin) });
   list.push({ depth: avatarDepth(avatar) + ORDER.avatar, draw: () => drawAvatar(ctx, avatar, origin) });
+  // Path dots lie on the floor, so furniture and walls in front hide them.
+  for (const { tile, alpha } of dots) {
+    list.push({ depth: tile.gx + tile.gy + ORDER.highlight, draw: () => drawPathDot(ctx, tile, origin, alpha) });
+  }
   if (hovered) {
     const tile = tileAt(room, hovered.gx, hovered.gy);
     list.push({ depth: tile.gx + tile.gy + ORDER.highlight, draw: () => drawHighlight(ctx, tile, origin) });

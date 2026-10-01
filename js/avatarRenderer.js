@@ -38,7 +38,7 @@ export function drawAvatar(ctx, avatar, origin) {
 export function drawPathDot(ctx, tile, origin, alpha) {
   const c = gridToScreen(tile.gx + 0.5, tile.gy + 0.5, origin, tile.height);
   ctx.globalAlpha = alpha;
-  ellipse(ctx, c.x, c.y, 3.5, 1.75, P.pathDot);
+  ellipse(ctx, c.x, c.y, 5, 2.5, P.pathDot);
   ctx.globalAlpha = 1;
 }
 
