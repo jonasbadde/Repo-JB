@@ -110,6 +110,11 @@ export function furnitureChanged(avatar, room) {
   if (goal && avatar.path.some((t) => !t.walkable)) {
     if (!walkTo(avatar, room, goal)) avatar.path = [];
   }
+  // Walking over to sit: the cushion may have gone, moved or turned meanwhile.
+  if (avatar.sitFacing) {
+    const cushion = cushionAt(room, avatar.path.at(-1) || avatar.next || avatar.tile);
+    avatar.sitFacing = cushion ? sitDirection(room, cushion) : null;
+  }
 }
 
 function cushionAt(room, tile) {

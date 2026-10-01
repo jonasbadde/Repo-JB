@@ -108,6 +108,16 @@ test('the avatar stands up when its cushion is picked up', () => {
   assert.equal(avatar.sitting, false);
 });
 
+test("the avatar doesn't sit on the floor if its cushion is taken on the way", () => {
+  const room = fresh();
+  const avatar = createAvatar(room, 9, 1);
+  walkTo(avatar, room, tileAt(room, 3, 3));
+  pickUp(room, byId(room, 'cushion-3'));
+  furnitureChanged(avatar, room);
+  updateAvatar(avatar, 10000);
+  assert.equal(avatar.sitting, false);
+});
+
 test("a saved layout can't put furniture where the avatar starts", () => {
   const store = new Map([['teaHouse.furniture.v1', JSON.stringify({ items: [{ id: 'andon-1', gx: 9, gy: 1, rot: 0 }], tray: [] })]]);
   globalThis.localStorage = { getItem: (k) => store.get(k) ?? null, setItem() {}, removeItem() {} };

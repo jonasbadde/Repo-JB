@@ -27,7 +27,7 @@ export function createFurnitureEditor(room, avatar) {
   const trayItems = tray.querySelector('.tray-items');
   const edit = {
     selected: null, // the item whose menu is open
-    moving: null, // { item, from } while an item follows the mouse; from = where it was
+    moving: null, // { item, from, rot } while an item follows the mouse; from = where it was
     ghost: null, // { item, gx, gy, rot, ok } where the moving item would land
     message: null, // { text, until }
   };
@@ -46,7 +46,7 @@ export function createFurnitureEditor(room, avatar) {
   function startMoving(item) {
     if (edit.moving) cancelMove();
     const inTray = room.tray.includes(item);
-    edit.moving = { item, from: inTray ? null : { gx: item.gx, gy: item.gy, rot: item.rot } };
+    edit.moving = { item, rot: item.rot || 0, from: inTray ? null : { gx: item.gx, gy: item.gy, rot: item.rot } };
     edit.selected = null;
     if (!inTray) lift(room, item);
     changed();
@@ -128,7 +128,9 @@ export function createFurnitureEditor(room, avatar) {
   window.addEventListener('keydown', (e) => {
     if (e.key === 'r' || e.key === 'R') {
       // Turn the item being moved, or the selected one.
-      if (edit.moving && !ROUND.has(edit.moving.item.type) && edit.ghost) edit.ghost.rot = (edit.ghost.rot + 1) % 4;
+      if (edit.moving) {
+        if (!ROUND.has(edit.moving.item.type)) edit.moving.rot = (edit.moving.rot + 1) % 4;
+      }
       else if (edit.selected && !ROUND.has(edit.selected.type)) rotate(edit.selected);
     }
     if (e.key === 'Escape') {
@@ -141,7 +143,6 @@ export function createFurnitureEditor(room, avatar) {
 
   return {
     edit,
-    renderTray,
 
     /**
      * Handle a click on the canvas. Returns true if the click was used for
@@ -162,8 +163,7 @@ export function createFurnitureEditor(room, avatar) {
     /** Called every frame: follow the mouse with the ghost and keep the menu on its item. */
     update(origin, hovered) {
       if (edit.moving) {
-        const { item } = edit.moving;
-        const rot = edit.ghost ? edit.ghost.rot : item.rot;
+        const { item, rot } = edit.moving;
         edit.ghost = hovered && {
           item,
           gx: hovered.gx,
