@@ -33,6 +33,7 @@ function resize() {
   const bottom = gridToScreen(room.width, room.depth, zero).y;
   const left = gridToScreen(0, room.depth, zero).x;
   const right = gridToScreen(room.width, 0, zero).x;
+  // (The grass margin around the map may run off screen; that's fine.)
   state.origin = {
     x: (w - (right - left)) / 2 - left,
     y: (h - (bottom - top)) / 2 - top,

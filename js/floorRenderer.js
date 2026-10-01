@@ -130,12 +130,12 @@ const TOPS = {
     ctx.stroke();
   },
 
-  moss(ctx, tile, corners) {
-    drawMoss(ctx, tile, corners);
+  moss(ctx, tile, corners, origin, room) {
+    drawMoss(ctx, tile, corners, room);
   },
 
-  steppingStone(ctx, tile, corners) {
-    drawMoss(ctx, tile, corners);
+  steppingStone(ctx, tile, corners, origin, room) {
+    drawMoss(ctx, tile, corners, room);
     // A flat, slightly irregular stone lying in the moss. A circle on the
     // ground looks like an ellipse twice as wide as it is tall.
     const [top, , bottom] = corners;
@@ -194,10 +194,19 @@ const TOPS = {
   },
 };
 
-function drawMoss(ctx, { gx, gy }, corners) {
+function drawMoss(ctx, { gx, gy }, corners, room) {
   fillPolygon(ctx, corners, hash(gx, gy, 1) > 0.5 ? P.moss : P.mossAlt);
-  // A few darker specks at fixed "random" spots inside the diamond.
   const [top, right, bottom, left] = corners;
+
+  // Shadow at the foot of the house: if the tile behind is raised, darken
+  // a strip along the shared edge. It grounds the building visually.
+  const behind = [
+    [tileAt(room, gx, gy - 1), [top, right, lerp(right, bottom, 0.35), lerp(top, left, 0.35)]],
+    [tileAt(room, gx - 1, gy), [top, left, lerp(left, bottom, 0.35), lerp(top, right, 0.35)]],
+  ];
+  for (const [n, strip] of behind) if (n && n.height > 0) fillPolygon(ctx, strip, P.shadow);
+
+  // A few darker specks at fixed "random" spots inside the diamond.
   ctx.fillStyle = P.mossSpeck;
   for (let i = 0; i < 4; i++) {
     const u = 0.15 + hash(gx, gy, i + 10) * 0.7;

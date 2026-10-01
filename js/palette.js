@@ -63,6 +63,12 @@ export const PALETTE = {
   bambooDark: '#8a7a3e',
   bambooTie: '#4a3a24',
   shadow: 'rgba(30, 30, 20, 0.22)',
+  soil: '#7a5a3c', // the cut edge of the ground the house stands on
+  soilDark: '#5e4430',
+  tuft: 'rgba(70, 105, 50, 0.5)',
+  treeDark: '#557f52',
+  treeLight: '#6f9a66',
+  trunk: '#5a4232',
 
   // Roof.
   roofTile: '#5d6470', // grey-blue fired clay (kawara)

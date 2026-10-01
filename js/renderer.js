@@ -9,6 +9,7 @@ import { tileCorners } from './iso.js';
 import { tilesInDrawOrder, tileAt } from './room.js';
 import { drawTile } from './floorRenderer.js';
 import { drawBackWalls, drawLowWall, drawEavePost } from './wallRenderer.js';
+import { drawGround, frontFences } from './ground.js';
 import { fillPolygon, strokePolygon } from './draw.js';
 import { PALETTE as P } from './palette.js';
 
@@ -18,6 +19,8 @@ import { PALETTE as P } from './palette.js';
 const ORDER = { tile: 0, highlight: 0.1, object: 0.6, wall: 0.8 };
 
 export function drawScene(ctx, room, origin, { hovered, time }) {
+  // Things that are behind everything else don't need sorting.
+  drawGround(ctx, room, origin);
   drawBackWalls(ctx, room, origin);
 
   const list = [];
@@ -28,6 +31,7 @@ export function drawScene(ctx, room, origin, { hovered, time }) {
     if (wall.back) continue;
     list.push({ depth: wall.gx + wall.gy + ORDER.wall, draw: () => drawLowWall(ctx, room, wall, origin) });
   }
+  for (const fence of frontFences(room, origin)) list.push({ depth: fence.depth, draw: () => fence.draw(ctx) });
   list.push({ depth: 7 + ORDER.wall + 0.1, draw: () => drawEavePost(ctx, room, origin) });
   if (hovered) {
     const tile = tileAt(room, hovered.gx, hovered.gy);
