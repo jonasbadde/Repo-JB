@@ -4,7 +4,7 @@
 import { gridToScreen, pointInPolygon } from './iso.js';
 import { tileAt } from './room.js';
 import { itemSize } from './decor.js';
-import { MOVABLE, ROUND, checkPlace, place, lift, pickUp } from './furniture.js';
+import { MOVABLE, ROUND, checkPlace, place, lift, pickUp, saveLayout, resetLayout } from './furniture.js';
 import { drawItemAt } from './decorRenderer.js';
 import { furnitureChanged } from './avatar.js';
 
@@ -38,6 +38,8 @@ export function createFurnitureEditor(room, avatar) {
   const changed = () => {
     furnitureChanged(avatar, room);
     renderTray();
+    // Save only when nothing is "in hand", so a reload never loses an item.
+    if (!edit.moving) saveLayout(room);
   };
 
   /** Start moving an item from the room, or from the tray (then it has no `from`). */
@@ -99,6 +101,15 @@ export function createFurnitureEditor(room, avatar) {
       edit.selected = null;
       changed();
     }
+  });
+
+  document.getElementById('reset-room').addEventListener('click', () => {
+    if (!window.confirm('Put all the furniture back where it started?')) return;
+    edit.moving = null;
+    edit.ghost = null;
+    edit.selected = null;
+    resetLayout(room);
+    changed();
   });
 
   // Clicking something in the tray picks it up "in hand" to place it.

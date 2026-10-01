@@ -10,6 +10,7 @@ import { lightPosition } from './decorRenderer.js';
 import { drawLighting } from './lighting.js';
 import { createAvatar, walkTo, updateAvatar } from './avatar.js';
 import { createFurnitureEditor } from './furnitureUI.js';
+import { loadLayout } from './furniture.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -17,8 +18,10 @@ const hud = document.getElementById('hud');
 const timeButton = document.getElementById('time-toggle');
 
 const room = createRoom();
+const START = { gx: 9, gy: 1 }; // the avatar starts in the genkan, by the door
+loadLayout(room, [START]); // furniture as the player left it last time
 const camera = createCamera();
-const avatar = createAvatar(room, 9, 1); // in the genkan, by the door
+const avatar = createAvatar(room, START.gx, START.gy);
 const editor = createFurnitureEditor(room, avatar);
 const state = {
   centred: { x: 0, y: 0 }, // where grid (0,0) lands when the building is centred

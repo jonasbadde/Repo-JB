@@ -118,8 +118,11 @@ export function saveLayout(room) {
   }
 }
 
-/** Load the saved layout, if there is one and it is still valid. */
-export function loadLayout(room) {
+/**
+ * Load the saved layout, if there is one and it is still valid. `avoid`
+ * lists tiles that must stay free (where the avatar starts).
+ */
+export function loadLayout(room, avoid = []) {
   let data;
   try {
     data = JSON.parse(localStorage.getItem(SAVE_KEY));
@@ -157,7 +160,7 @@ export function loadLayout(room) {
   refreshWalkable(room);
   const valid = items
     .filter((i) => MOVABLE.has(i.type))
-    .every((i) => checkPlace(room, i, i.gx, i.gy, i.rot).ok);
+    .every((i) => checkPlace(room, i, i.gx, i.gy, i.rot, i.type === 'cushion' ? [] : avoid).ok);
   if (!valid) {
     Object.assign(room, before);
     refreshWalkable(room);

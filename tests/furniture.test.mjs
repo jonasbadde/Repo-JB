@@ -84,4 +84,12 @@ test('a saved layout loads back, and a broken one is ignored', () => {
   assert.equal(itemAt(broken, 3, 2)?.id, 'table'); // a table in the garden: kept the default
 });
 
+test("a saved layout can't put furniture where the avatar starts", () => {
+  const store = new Map([['teaHouse.furniture.v1', JSON.stringify({ items: [{ id: 'andon-1', gx: 9, gy: 1, rot: 0 }], tray: [] })]]);
+  globalThis.localStorage = { getItem: (k) => store.get(k) ?? null, setItem() {}, removeItem() {} };
+  const room = fresh();
+  loadLayout(room, [{ gx: 9, gy: 1 }]);
+  assert.equal(itemAt(room, 0, 4)?.id, 'andon-1'); // stayed at the default
+});
+
 finish();

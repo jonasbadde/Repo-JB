@@ -16,6 +16,7 @@ canvas {
 /* The three little panels share one look. */
 #hud,
 #time-toggle,
+#reset-room,
 #help {
   position: fixed;
   padding: 6px 12px;
@@ -116,7 +117,14 @@ canvas {
   cursor: pointer;
 }
 
-#time-toggle:hover {
+#reset-room {
+  right: 16px;
+  top: 60px;
+  cursor: pointer;
+}
+
+#time-toggle:hover,
+#reset-room:hover {
   background: rgba(59, 36, 24, 0.9);
 }
 
