@@ -99,6 +99,20 @@ export const PALETTE = {
   mountain: '#b98c8a',
   pagoda: '#4a2a2a',
 
+  // The avatar: an indigo yukata with a moss-green obi, wooden geta.
+  yukata: '#3b4a7a',
+  yukataShade: '#2b365e',
+  yukataPattern: 'rgba(244, 236, 216, 0.6)', // hemp-leaf (asanoha) marks
+  collar: '#f4ecd8',
+  obiKnot: '#5f8048',
+  skin: '#f3d6b8',
+  skinShade: '#e3b894',
+  blush: 'rgba(224, 120, 120, 0.45)',
+  hair: '#2f2622',
+  hairTie: '#d9b866',
+  eye: '#2f2a26',
+  pathDot: '#fff3c4', // the planned walk, shown briefly on the floor
+
   hoverFill: 'rgba(255, 244, 200, 0.45)',
   hoverStroke: '#fff3c4',
   hoverBlocked: '#f0b4a0', // outline for tiles you can't walk on
