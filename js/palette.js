@@ -70,6 +70,22 @@ export const PALETTE = {
   treeLight: '#6f9a66',
   trunk: '#5a4232',
 
+  // Furniture and garden objects.
+  lacquer: '#4a2a1f', // low table top
+  cushion: '#8e4b5a',
+  cushionSide: '#6e3846',
+  vase: '#3e5c6b',
+  blossom: '#f2b8c6',
+  lanternPaper: '#f7e6bf',
+  lanternPaperShade: '#e8d2a3',
+  lanternLight: '#ffd27a', // the lit opening of the stone lantern
+  lanternStone: '#a29c90',
+  lanternStoneShade: '#837d72',
+  lanternStoneTop: '#b8b2a6',
+  maple: '#c8553d',
+  mapleLight: '#e07a4f',
+  mapleDark: '#9e3b2e',
+
   // Roof.
   roofTile: '#5d6470', // grey-blue fired clay (kawara)
   roofTileDark: '#454b55',

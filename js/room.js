@@ -5,6 +5,7 @@
 // and gy going down. On screen the map is turned 45°, so the top-left
 // letter becomes the back corner of the building. Edit the letters to
 // change the layout.
+import { DECOR, itemTiles } from './decor.js';
 
 const MAP = `
 TKKTTTTTSSS.
@@ -90,6 +91,13 @@ export function createRoom() {
     wallTop: 186, // height of the wall tops above the ground, in pixels
   };
   room.walls = findWalls(room);
+
+  // Furniture blocks the tiles it stands on, except cushions: you'll be
+  // able to step onto those to sit down.
+  for (const item of DECOR) {
+    if (item.type === 'cushion') continue;
+    for (const { gx, gy } of itemTiles(item)) tileAt(room, gx, gy).walkable = false;
+  }
   return room;
 }
 

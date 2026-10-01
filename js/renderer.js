@@ -10,6 +10,8 @@ import { tilesInDrawOrder, tileAt } from './room.js';
 import { drawTile } from './floorRenderer.js';
 import { drawBackWalls, drawLowWall, drawEavePost } from './wallRenderer.js';
 import { drawGround, frontFences } from './ground.js';
+import { drawItem } from './decorRenderer.js';
+import { DECOR, itemTiles } from './decor.js';
 import { fillPolygon, strokePolygon } from './draw.js';
 import { PALETTE as P } from './palette.js';
 
@@ -30,6 +32,12 @@ export function drawScene(ctx, room, origin, { hovered, time }) {
   for (const wall of room.walls) {
     if (wall.back) continue;
     list.push({ depth: wall.gx + wall.gy + ORDER.wall, draw: () => drawLowWall(ctx, room, wall, origin) });
+  }
+  for (const item of DECOR) {
+    // A big item is drawn with its front-most tile, so everything behind it
+    // is already painted.
+    const front = Math.max(...itemTiles(item).map((t) => t.gx + t.gy));
+    list.push({ depth: front + ORDER.object, draw: () => drawItem(ctx, room, item, origin) });
   }
   for (const fence of frontFences(room, origin)) list.push({ depth: fence.depth, draw: () => fence.draw(ctx) });
   list.push({ depth: 7 + ORDER.wall + 0.1, draw: () => drawEavePost(ctx, room, origin) });
