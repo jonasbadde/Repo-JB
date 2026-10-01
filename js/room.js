@@ -164,7 +164,7 @@ function hasWall(room, a, b) {
 
 /**
  * Can someone walk directly from tile a to its neighbour b?
- * Not used yet. This is the rule the avatar's pathfinding will follow.
+ * This is the rule the avatar's pathfinding (pathfinding.js) follows.
  */
 export function canStepBetween(room, a, b) {
   if (!a || !b || !a.walkable || !b.walkable) return false;
