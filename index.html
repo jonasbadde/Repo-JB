@@ -14,6 +14,12 @@
   <div id="furni-menu" hidden>
     <button data-action="move">Move</button>
     <button data-action="rotate" title="Turn a quarter turn (R)">Rotate</button>
+    <button data-action="pickup">Pick up</button>
+  </div>
+  <!-- Picked-up furniture, wrapped in a furoshiki cloth until you place it again. -->
+  <div id="tray" hidden>
+    <span class="tray-label">Furoshiki</span>
+    <div class="tray-items"></div>
   </div>
   <div id="help">click a tile to walk there · drag, scroll or use the arrow keys to look around · Home recentres</div>
   <!-- type="module" lets us use import/export between files.

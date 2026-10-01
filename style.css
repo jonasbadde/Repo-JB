@@ -61,6 +61,49 @@ canvas {
   cursor: default;
 }
 
+/* The tray of picked-up furniture: an indigo furoshiki cloth along the bottom. */
+#tray {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(43, 54, 94, 0.88);
+  color: #f4ecd8;
+  font: 13px/1.4 Georgia, "Hiragino Mincho ProN", serif;
+  transform: translateX(-50%);
+}
+
+#tray[hidden] {
+  display: none;
+}
+
+.tray-items {
+  display: flex;
+  gap: 6px;
+}
+
+.tray-items button {
+  padding: 0;
+  border: 1px solid rgba(244, 236, 216, 0.25);
+  border-radius: 6px;
+  background: rgba(244, 236, 216, 0.12);
+  cursor: pointer;
+}
+
+.tray-items button:hover {
+  background: rgba(244, 236, 216, 0.28);
+}
+
+.tray-items canvas {
+  display: block;
+  width: 72px;
+  height: 56px;
+}
+
 #hud {
   left: 16px;
   bottom: 16px;
@@ -88,5 +131,9 @@ canvas {
 @media (max-width: 600px) {
   #help {
     display: none; /* not enough room on a phone */
+  }
+
+  #tray {
+    bottom: 60px; /* above the HUD */
   }
 }

@@ -4,7 +4,8 @@
 import { gridToScreen, pointInPolygon } from './iso.js';
 import { tileAt } from './room.js';
 import { itemSize } from './decor.js';
-import { MOVABLE, ROUND, checkPlace, place, lift } from './furniture.js';
+import { MOVABLE, ROUND, checkPlace, place, lift, pickUp } from './furniture.js';
+import { drawItemAt } from './decorRenderer.js';
 import { furnitureChanged } from './avatar.js';
 
 // How tall each kind of furniture is, and how far its outline is inset
@@ -22,6 +23,8 @@ const MESSAGE_TIME = 2500; // ms a "can't place" message stays in the HUD
 
 export function createFurnitureEditor(room, avatar) {
   const menu = document.getElementById('furni-menu');
+  const tray = document.getElementById('tray');
+  const trayItems = tray.querySelector('.tray-items');
   const edit = {
     selected: null, // the item whose menu is open
     moving: null, // { item, from } while an item follows the mouse; from = where it was
@@ -32,12 +35,18 @@ export function createFurnitureEditor(room, avatar) {
   const say = (text) => (edit.message = { text, until: performance.now() + MESSAGE_TIME });
   // The avatar's tiles must stay free: where it stands and where it is stepping to.
   const avoid = () => [avatar.tile, avatar.next];
-  const changed = () => furnitureChanged(avatar, room);
+  const changed = () => {
+    furnitureChanged(avatar, room);
+    renderTray();
+  };
 
+  /** Start moving an item from the room, or from the tray (then it has no `from`). */
   function startMoving(item) {
-    edit.moving = { item, from: { gx: item.gx, gy: item.gy, rot: item.rot } };
+    if (edit.moving) cancelMove();
+    const inTray = room.tray.includes(item);
+    edit.moving = { item, from: inTray ? null : { gx: item.gx, gy: item.gy, rot: item.rot } };
     edit.selected = null;
-    lift(room, item);
+    if (!inTray) lift(room, item);
     changed();
   }
 
@@ -69,9 +78,11 @@ export function createFurnitureEditor(room, avatar) {
 
   function cancelMove() {
     const { item, from } = edit.moving;
-    // Put it back where it was, unless the avatar has walked onto that spot.
-    const back = checkPlace(room, item, from.gx, from.gy, from.rot, avoid());
-    if (back.ok) place(room, item, from.gx, from.gy, from.rot);
+    // Put it back where it was. If it came from the tray, or the avatar has
+    // walked onto its old spot meanwhile, it goes (back) into the tray.
+    const back = from && checkPlace(room, item, from.gx, from.gy, from.rot, avoid());
+    if (back && back.ok) place(room, item, from.gx, from.gy, from.rot);
+    else pickUp(room, item);
     edit.moving = null;
     edit.ghost = null;
     changed();
@@ -83,7 +94,25 @@ export function createFurnitureEditor(room, avatar) {
     if (!item) return;
     if (action === 'move') startMoving(item);
     if (action === 'rotate') rotate(item);
+    if (action === 'pickup') {
+      pickUp(room, item);
+      edit.selected = null;
+      changed();
+    }
   });
+
+  // Clicking something in the tray picks it up "in hand" to place it.
+  trayItems.addEventListener('click', (e) => {
+    const button = e.target.closest('button');
+    const item = button && room.tray.find((i) => i.id === button.dataset.id);
+    if (item) startMoving(item);
+  });
+
+  /** Show what's in the tray, each as a little drawing of the item. */
+  function renderTray() {
+    tray.hidden = !room.tray.length;
+    trayItems.replaceChildren(...room.tray.map(trayButton));
+  }
 
   window.addEventListener('keydown', (e) => {
     if (e.key === 'r' || e.key === 'R') {
@@ -97,8 +126,11 @@ export function createFurnitureEditor(room, avatar) {
     }
   });
 
+  renderTray();
+
   return {
     edit,
+    renderTray,
 
     /**
      * Handle a click on the canvas. Returns true if the click was used for
@@ -151,6 +183,27 @@ export function createFurnitureEditor(room, avatar) {
       return null;
     },
   };
+}
+
+const ICON = { w: 72, h: 56, scale: 0.7 }; // tray icon size in CSS pixels
+
+function trayButton(item) {
+  const button = document.createElement('button');
+  button.dataset.id = item.id;
+  button.title = `Place ${NAMES[item.type]}`;
+  const canvas = document.createElement('canvas');
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = ICON.w * dpr;
+  canvas.height = ICON.h * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr * ICON.scale, dpr * ICON.scale);
+  // Centre the item's footprint, a little below the middle so tall things fit.
+  const { w, d } = itemSize(item);
+  const cx = ICON.w / 2 / ICON.scale;
+  const cy = (ICON.h * 0.72) / ICON.scale;
+  drawItemAt(ctx, { ...item, gx: 0, gy: 0 }, { x: cx - (w - d) * 16, y: cy - (w + d) * 8 }, 0);
+  button.append(canvas);
+  return button;
 }
 
 export const NAMES = { table: 'the table', cushion: 'a cushion', paperLantern: 'a paper lantern' };
