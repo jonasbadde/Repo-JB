@@ -9,16 +9,49 @@ canvas {
   display: block;
   width: 100vw;
   height: 100vh;
+  cursor: grab;
+  touch-action: none; /* let drags scroll the view instead of the page */
 }
 
-#hud {
+/* The three little panels share one look. */
+#hud,
+#time-toggle,
+#help {
   position: fixed;
-  left: 16px;
-  bottom: 16px;
   padding: 6px 12px;
+  border: 0;
   border-radius: 6px;
   background: rgba(59, 36, 24, 0.75);
   color: #f4ecd8;
   font: 14px/1.4 Georgia, "Hiragino Mincho ProN", serif;
+}
+
+#hud {
+  left: 16px;
+  bottom: 16px;
+  pointer-events: none; /* clicks go through to the canvas */
+}
+
+#time-toggle {
+  right: 16px;
+  top: 16px;
+  cursor: pointer;
+}
+
+#time-toggle:hover {
+  background: rgba(59, 36, 24, 0.9);
+}
+
+#help {
+  right: 16px;
+  bottom: 16px;
+  font-size: 12px;
+  opacity: 0.8;
   pointer-events: none;
+}
+
+@media (max-width: 600px) {
+  #help {
+    display: none; /* not enough room on a phone */
+  }
 }

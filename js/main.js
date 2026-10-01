@@ -6,10 +6,14 @@ import { drawScene } from './renderer.js';
 import { createCamera, attachCamera } from './camera.js';
 import { ROOF_DEPTH, ROOF_RISE } from './wallRenderer.js';
 import { MARGIN, SOIL } from './ground.js';
+import { DECOR } from './decor.js';
+import { lightPosition } from './decorRenderer.js';
+import { drawLighting } from './lighting.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const hud = document.getElementById('hud');
+const timeButton = document.getElementById('time-toggle');
 
 const room = createRoom();
 const camera = createCamera();
@@ -19,7 +23,21 @@ const state = {
   world: { w: 0, h: 0 }, // size of the building and its plot on screen
   mouse: null, // last mouse position in CSS pixels, or null
   hovered: null, // the tile under the mouse, or null
+  // Time of day: `dusk` slides towards `duskTarget` (0 = day, 1 = dusk)
+  // a little every frame, so switching fades instead of jumping.
+  dusk: 0,
+  duskTarget: 0,
+  lastTime: 0,
 };
+
+function toggleTimeOfDay() {
+  state.duskTarget = state.duskTarget ? 0 : 1;
+  timeButton.textContent = state.duskTarget ? '☀ Day' : '☾ Dusk';
+}
+timeButton.addEventListener('click', toggleTimeOfDay);
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'n' || e.key === 'N') toggleTimeOfDay();
+});
 
 // Size the canvas to the window. On high-DPI screens we render more real
 // pixels than CSS pixels so lines stay crisp, then scale the context so the
@@ -97,13 +115,24 @@ attachCamera(canvas, camera, cameraLimits);
 function frame(time) {
   const w = window.innerWidth;
   const h = window.innerHeight;
+  const dt = Math.min(100, time - state.lastTime); // ms since the last frame
+  state.lastTime = time;
+  // Move 1/800 of the way per ms: a full fade takes a little under a second.
+  const step = dt / 800;
+  state.dusk += Math.max(-step, Math.min(step, state.duskTarget - state.dusk));
+
   state.origin = { x: state.centred.x + camera.x, y: state.centred.y + camera.y };
   // Picking every frame (not only on mousemove) keeps the highlight right
   // when the view scrolls under a still mouse.
   state.hovered = state.mouse ? pickTile(state.mouse) : null;
 
-  drawBackdrop(ctx, w, h);
+  drawBackdrop(ctx, w, h, state.dusk);
   drawScene(ctx, room, state.origin, { hovered: state.hovered, time });
+  const lights = DECOR.filter((item) => item.glow).map((item) => ({
+    ...lightPosition(room, item, state.origin),
+    glow: item.glow,
+  }));
+  drawLighting(ctx, w, h, lights, state.dusk, time);
 
   const t = state.hovered;
   hud.textContent = t ? `${AREA_NAMES[t.area]} · tile (${t.gx}, ${t.gy})${t.walkable ? '' : ' · blocked'}` : 'hover a tile';

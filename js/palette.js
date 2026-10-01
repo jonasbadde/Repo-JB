@@ -11,6 +11,8 @@ export const PALETTE = {
   eveningMiddle: '#c7708a',
   eveningBottom: '#f4a96b',
   star: 'rgba(255, 248, 225, 0.9)',
+  duskTint: '#8074a8', // the whole scene is multiplied by this at dusk
+  glow: '#ffc478', // warm lantern light
 
   tatami: '#cfc47e',
   tatamiAlt: '#c4b972',
