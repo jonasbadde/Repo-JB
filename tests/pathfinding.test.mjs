@@ -1,23 +1,13 @@
 // Checks for the avatar's pathfinding. No libraries needed:
 //   node tests/pathfinding.test.mjs
 import assert from 'node:assert/strict';
+import { test, finish } from './test.mjs';
 import { createRoom, tileAt } from '../js/room.js';
 import { findPath, pathToClick, stepFrom } from '../js/pathfinding.js';
 
 const room = createRoom();
 const at = (gx, gy) => tileAt(room, gx, gy);
 const names = (path) => path.tiles.map((t) => `${t.gx},${t.gy}`);
-let failures = 0;
-
-function test(name, fn) {
-  try {
-    fn();
-    console.log(`ok   ${name}`);
-  } catch (e) {
-    failures++;
-    console.log(`FAIL ${name}\n     ${e.message}`);
-  }
-}
 
 /** Every step of a path must be one the avatar is allowed to take. */
 function assertValid(start, path) {
@@ -74,8 +64,4 @@ test('clicking where you stand is an empty walk', () => {
   assert.deepEqual(pathToClick(room, at(9, 1), at(9, 1)).tiles, []);
 });
 
-if (failures) {
-  console.log(`\n${failures} failed`);
-  process.exit(1);
-}
-console.log('\nall passed');
+finish();

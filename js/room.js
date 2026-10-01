@@ -93,6 +93,7 @@ export function createRoom() {
   room.walls = findWalls(room);
   // The furniture as it is now; it starts as the layout in decor.js.
   room.items = DECOR.map((item) => ({ ...item }));
+  room.tray = []; // furniture that has been picked up
   for (const t of tiles) t.floorWalkable = t.walkable; // walkable without furniture
   refreshWalkable(room);
   return room;
