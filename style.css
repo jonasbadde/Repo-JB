@@ -26,6 +26,41 @@ canvas {
   font: 14px/1.4 Georgia, "Hiragino Mincho ProN", serif;
 }
 
+/* Menu over the selected furniture. Its left/top is the point above the
+   item, so it is shifted up and left by its own size to sit centred on it. */
+#furni-menu {
+  position: fixed;
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 6px;
+  background: rgba(59, 36, 24, 0.85);
+  transform: translate(-50%, -100%);
+}
+
+#furni-menu[hidden] {
+  display: none;
+}
+
+#furni-menu button {
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 4px;
+  background: rgba(244, 236, 216, 0.15);
+  color: #f4ecd8;
+  font: 13px/1.4 Georgia, "Hiragino Mincho ProN", serif;
+  cursor: pointer;
+}
+
+#furni-menu button:hover {
+  background: rgba(244, 236, 216, 0.3);
+}
+
+#furni-menu button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 #hud {
   left: 16px;
   bottom: 16px;

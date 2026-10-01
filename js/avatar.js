@@ -96,6 +96,22 @@ function place(avatar) {
   avatar.h = a.height + (b.height - a.height) * ease + hop;
 }
 
+/**
+ * Call after furniture has moved. The avatar stands up if its cushion is
+ * gone (or turns with it), and finds a new way if its path got blocked.
+ */
+export function furnitureChanged(avatar, room) {
+  if (avatar.sitting) {
+    const cushion = cushionAt(room, avatar.tile);
+    if (cushion) avatar.facing = sitDirection(room, cushion);
+    else avatar.sitting = false;
+  }
+  const goal = avatar.path.at(-1);
+  if (goal && avatar.path.some((t) => !t.walkable)) {
+    if (!walkTo(avatar, room, goal)) avatar.path = [];
+  }
+}
+
 function cushionAt(room, tile) {
   return room.items.find((item) => item.type === 'cushion' && item.gx === tile.gx && item.gy === tile.gy);
 }

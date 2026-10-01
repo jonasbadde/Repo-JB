@@ -113,6 +113,11 @@ export const PALETTE = {
   eye: '#2f2a26',
   pathDot: '#fff3c4', // the planned walk, shown briefly on the floor
 
+  // Moving furniture: the footprint shows where it can (or can't) go.
+  placeOk: 'rgba(150, 205, 120, 0.45)',
+  placeOkStroke: '#d8f0c4',
+  placeBad: 'rgba(225, 110, 90, 0.45)',
+
   hoverFill: 'rgba(255, 244, 200, 0.45)',
   hoverStroke: '#fff3c4',
   hoverBlocked: '#f0b4a0', // outline for tiles you can't walk on

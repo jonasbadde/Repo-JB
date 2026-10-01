@@ -50,6 +50,12 @@ test('rotating the table turns its footprint', () => {
   assert.equal(itemAt(room, 7, 2), null);
 });
 
+test('the table may not straddle a step between floors', () => {
+  const room = fresh();
+  const table = byId(room, 'table');
+  assert.equal(checkPlace(room, table, 6, 5, 1).reason, "the floor isn't level"); // tatami (6,5) + engawa (6,6)
+});
+
 test('picking up moves an item to the tray and frees its tiles', () => {
   const room = fresh();
   const table = byId(room, 'table');

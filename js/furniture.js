@@ -31,9 +31,11 @@ export function itemAt(room, gx, gy) {
  */
 export function checkPlace(room, item, gx, gy, rot, avoid = []) {
   const trial = { ...item, gx, gy, rot };
+  const level = tileAt(room, gx, gy)?.height;
   for (const { gx: x, gy: y } of itemTiles(trial)) {
     const tile = tileAt(room, x, y);
     if (!tile || !AREAS.has(tile.area) || !tile.floorWalkable) return { ok: false, reason: "can't go here" };
+    if (tile.height !== level) return { ok: false, reason: "the floor isn't level" };
     const other = itemAt(room, x, y);
     if (other && other !== item) return { ok: false, reason: 'something is in the way' };
     if (avoid.some((t) => t && t.gx === x && t.gy === y)) return { ok: false, reason: 'you are standing there' };
