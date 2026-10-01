@@ -2,13 +2,35 @@
 // the sky behind the room, and the little view through the round window.
 import { PALETTE as P } from './palette.js';
 
-/** Soft sky, a few puffy clouds and rolling hills behind the whole room. */
-export function drawBackdrop(ctx, w, h) {
+/**
+ * Soft sky, a few puffy clouds and rolling hills behind the whole room.
+ * dusk (0..1) fades an evening sky with a few stars over the day sky.
+ */
+export function drawBackdrop(ctx, w, h, dusk = 0) {
   const sky = ctx.createLinearGradient(0, 0, 0, h);
   sky.addColorStop(0, P.skyTop);
   sky.addColorStop(1, P.skyBottom);
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, w, h);
+
+  if (dusk > 0) {
+    ctx.save();
+    ctx.globalAlpha = dusk;
+    const evening = ctx.createLinearGradient(0, 0, 0, h);
+    evening.addColorStop(0, P.eveningTop);
+    evening.addColorStop(0.55, P.eveningMiddle);
+    evening.addColorStop(1, P.eveningBottom);
+    ctx.fillStyle = evening;
+    ctx.fillRect(0, 0, w, h);
+    // Stars at fixed spots in the top part of the sky.
+    ctx.fillStyle = P.star;
+    for (let i = 0; i < 40; i++) {
+      const x = ((Math.sin(i * 12.9898) * 43758.5453) % 1 + 1) % 1;
+      const y = ((Math.sin(i * 78.233) * 12543.1234) % 1 + 1) % 1;
+      ctx.fillRect(x * w, y * h * 0.4, 1.5, 1.5);
+    }
+    ctx.restore();
+  }
 
   // Clouds: a few overlapping circles each. Positions are relative to the
   // canvas size so they stay put when the window is resized.

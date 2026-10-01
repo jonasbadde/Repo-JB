@@ -17,15 +17,18 @@
 //   screenX = (gx - gy) * TILE_W / 2
 //   screenY = (gx + gy) * TILE_H / 2
 // plus an `origin` offset that says where grid (0,0) sits on the canvas.
+//
+// Height: isometric projection keeps vertical lines vertical, so lifting a
+// point `h` pixels off the ground is simply "subtract h from screen y".
 
 export const TILE_W = 64; // diamond width in pixels
 export const TILE_H = 32; // diamond height in pixels (half the width => 2:1)
 
-/** Grid point -> screen pixel. Fractional grid coords are fine. */
-export function gridToScreen(gx, gy, origin) {
+/** Grid point (optionally lifted h pixels) -> screen pixel. Fractional grid coords are fine. */
+export function gridToScreen(gx, gy, origin, h = 0) {
   return {
     x: origin.x + (gx - gy) * (TILE_W / 2),
-    y: origin.y + (gx + gy) * (TILE_H / 2),
+    y: origin.y + (gx + gy) * (TILE_H / 2) - h,
   };
 }
 
@@ -40,6 +43,8 @@ export function gridToScreen(gx, gy, origin) {
  *   gx = dx / W + dy / H
  *   gy = dy / H - dx / W
  * Returns fractional coords; floor them to get the tile under the point.
+ * This assumes the point lies on the ground (h = 0); for raised floors use
+ * pointInPolygon on the lifted tile corners instead.
  */
 export function screenToGrid(sx, sy, origin) {
   const dx = sx - origin.x;
@@ -50,12 +55,30 @@ export function screenToGrid(sx, sy, origin) {
   };
 }
 
-/** The four screen corners of tile (gx, gy): top, right, bottom, left. */
-export function tileCorners(gx, gy, origin) {
+/** The four screen corners of tile (gx, gy) at height h: top, right, bottom, left. */
+export function tileCorners(gx, gy, origin, h = 0) {
   return [
-    gridToScreen(gx, gy, origin),
-    gridToScreen(gx + 1, gy, origin),
-    gridToScreen(gx + 1, gy + 1, origin),
-    gridToScreen(gx, gy + 1, origin),
+    gridToScreen(gx, gy, origin, h),
+    gridToScreen(gx + 1, gy, origin, h),
+    gridToScreen(gx + 1, gy + 1, origin, h),
+    gridToScreen(gx, gy + 1, origin, h),
   ];
+}
+
+/**
+ * Is screen point p inside the convex polygon pts? We walk the edges and
+ * check which side of each edge p is on (the sign of a 2D cross product).
+ * Inside means "the same side of every edge".
+ */
+export function pointInPolygon(p, pts) {
+  let sign = 0;
+  for (let i = 0; i < pts.length; i++) {
+    const a = pts[i];
+    const b = pts[(i + 1) % pts.length];
+    const cross = (b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x);
+    if (cross === 0) continue;
+    if (sign === 0) sign = Math.sign(cross);
+    else if (Math.sign(cross) !== sign) return false;
+  }
+  return true;
 }
