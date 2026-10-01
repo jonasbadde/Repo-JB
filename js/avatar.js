@@ -6,6 +6,7 @@
 // drawn between tiles and between floor heights.
 import { tileAt, MAX_STEP } from './room.js';
 import { pathToClick } from './pathfinding.js';
+import { DECOR, itemTiles } from './decor.js';
 
 const SPEED = 2.5; // tiles per second
 const STRIDE = 0.8; // tiles walked per full walk cycle (left + right foot)
@@ -24,6 +25,8 @@ export function createAvatar(room, gx, gy) {
     facing: [1, 1], // grid direction it looks in
     walking: false,
     phase: 0, // walk cycle, in radians
+    sitting: false,
+    sitFacing: null, // set while walking to a cushion: the way to face when sitting
   };
 }
 
@@ -38,6 +41,10 @@ export function walkTo(avatar, room, target) {
   const plan = pathToClick(room, from, target);
   if (!plan) return null;
   avatar.path = plan.tiles;
+  avatar.sitting = false; // stand up
+  // Clicking a cushion means "sit here", once the avatar gets there.
+  const reaches = plan.tiles.length ? plan.tiles.at(-1) === target : from === target;
+  avatar.sitFacing = reaches && isCushion(target) ? tableDirection(target) : null;
   return avatar.next ? [avatar.next, ...plan.tiles] : plan.tiles;
 }
 
@@ -62,9 +69,14 @@ export function updateAvatar(avatar, dt) {
       avatar.next = null;
     }
   }
-  if (!avatar.next && !avatar.path.length && avatar.walking) {
+  if (!avatar.next && !avatar.path.length) {
     avatar.walking = false;
     avatar.phase = 0;
+    if (avatar.sitFacing) {
+      avatar.sitting = true;
+      avatar.facing = avatar.sitFacing;
+      avatar.sitFacing = null;
+    }
   }
   place(avatar);
 }
@@ -81,6 +93,19 @@ function place(avatar) {
   const ease = t * t * (3 - 2 * t);
   const hop = Math.abs(b.height - a.height) > MAX_STEP ? Math.sin(Math.PI * t) * HOP : 0;
   avatar.h = a.height + (b.height - a.height) * ease + hop;
+}
+
+function isCushion(tile) {
+  return DECOR.some((item) => item.type === 'cushion' && item.gx === tile.gx && item.gy === tile.gy);
+}
+
+/** Which way to face when sitting on this cushion: towards the table next to it. */
+function tableDirection(tile) {
+  const tables = DECOR.filter((item) => item.type === 'table').flatMap(itemTiles);
+  for (const [dx, dy] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+    if (tables.some((t) => t.gx === tile.gx + dx && t.gy === tile.gy + dy)) return [dx, dy];
+  }
+  return [1, 1]; // no table: face the camera
 }
 
 /**
