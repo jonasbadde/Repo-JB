@@ -13,7 +13,7 @@ import { drawGround, frontFences } from './ground.js';
 import { drawItem } from './decorRenderer.js';
 import { drawAvatar, drawPathDot } from './avatarRenderer.js';
 import { avatarDepth } from './avatar.js';
-import { DECOR, itemTiles } from './decor.js';
+import { itemTiles } from './decor.js';
 import { fillPolygon, strokePolygon } from './draw.js';
 import { PALETTE as P } from './palette.js';
 
@@ -36,7 +36,7 @@ export function drawScene(ctx, room, origin, { hovered, time, avatar, dots = [] 
     if (wall.back) continue;
     list.push({ depth: wall.gx + wall.gy + ORDER.wall, draw: () => drawLowWall(ctx, room, wall, origin) });
   }
-  for (const item of DECOR) {
+  for (const item of room.items) {
     // A big item is drawn with its front-most tile, so everything behind it
     // is already painted.
     const front = Math.max(...itemTiles(item).map((t) => t.gx + t.gy));

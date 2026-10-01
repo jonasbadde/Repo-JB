@@ -6,7 +6,6 @@ import { drawScene } from './renderer.js';
 import { createCamera, attachCamera, followPoint } from './camera.js';
 import { ROOF_DEPTH, ROOF_RISE } from './wallRenderer.js';
 import { MARGIN, SOIL } from './ground.js';
-import { DECOR } from './decor.js';
 import { lightPosition } from './decorRenderer.js';
 import { drawLighting } from './lighting.js';
 import { createAvatar, walkTo, updateAvatar } from './avatar.js';
@@ -150,7 +149,7 @@ function frame(time) {
 
   drawBackdrop(ctx, w, h, state.dusk);
   drawScene(ctx, room, state.origin, { hovered: state.hovered, time, avatar, dots: pathDots(time) });
-  const lights = DECOR.filter((item) => item.glow).map((item) => ({
+  const lights = room.items.filter((item) => item.glow).map((item) => ({
     ...lightPosition(room, item, state.origin),
     glow: item.glow,
   }));

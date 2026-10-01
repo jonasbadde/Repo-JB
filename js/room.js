@@ -91,14 +91,26 @@ export function createRoom() {
     wallTop: 186, // height of the wall tops above the ground, in pixels
   };
   room.walls = findWalls(room);
-
-  // Furniture blocks the tiles it stands on, except cushions: you'll be
-  // able to step onto those to sit down.
-  for (const item of DECOR) {
-    if (item.type === 'cushion') continue;
-    for (const { gx, gy } of itemTiles(item)) tileAt(room, gx, gy).walkable = false;
-  }
+  // The furniture as it is now; it starts as the layout in decor.js.
+  room.items = DECOR.map((item) => ({ ...item }));
+  for (const t of tiles) t.floorWalkable = t.walkable; // walkable without furniture
+  refreshWalkable(room);
   return room;
+}
+
+/**
+ * Work out tile.walkable again after furniture has moved. Furniture blocks
+ * the tiles it stands on, except cushions: you can step onto those to sit.
+ */
+export function refreshWalkable(room) {
+  for (const t of room.tiles) t.walkable = t.floorWalkable;
+  for (const item of room.items) {
+    if (item.type === 'cushion') continue;
+    for (const { gx, gy } of itemTiles(item)) {
+      const t = tileAt(room, gx, gy);
+      if (t) t.walkable = false;
+    }
+  }
 }
 
 export function isInside(room, gx, gy) {
