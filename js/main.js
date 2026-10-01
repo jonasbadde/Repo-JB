@@ -3,12 +3,13 @@ import { gridToScreen, tileCorners, pointInPolygon } from './iso.js';
 import { createRoom, tilesInDrawOrder, AREA_NAMES } from './room.js';
 import { drawBackdrop } from './scenery.js';
 import { drawScene } from './renderer.js';
-import { createCamera, attachCamera } from './camera.js';
+import { createCamera, attachCamera, followPoint } from './camera.js';
 import { ROOF_DEPTH, ROOF_RISE } from './wallRenderer.js';
 import { MARGIN, SOIL } from './ground.js';
 import { DECOR } from './decor.js';
 import { lightPosition } from './decorRenderer.js';
 import { drawLighting } from './lighting.js';
+import { createAvatar, walkTo, updateAvatar } from './avatar.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -17,6 +18,7 @@ const timeButton = document.getElementById('time-toggle');
 
 const room = createRoom();
 const camera = createCamera();
+const avatar = createAvatar(room, 9, 1); // in the genkan, by the door
 const state = {
   centred: { x: 0, y: 0 }, // where grid (0,0) lands when the building is centred
   origin: { x: 0, y: 0 }, // the same, after scrolling (centred + camera)
@@ -27,6 +29,7 @@ const state = {
   // a little every frame, so switching fades instead of jumping.
   dusk: 0,
   duskTarget: 0,
+  plan: null, // the last planned walk, { tiles, shownAt }, drawn as fading dots
   lastTime: 0,
 };
 
@@ -110,7 +113,22 @@ canvas.addEventListener('pointermove', (e) => {
 canvas.addEventListener('pointerleave', () => {
   state.mouse = null;
 });
-attachCamera(canvas, camera, cameraLimits);
+attachCamera(canvas, camera, cameraLimits, (point) => {
+  const tile = pickTile(point);
+  const tiles = tile && walkTo(avatar, room, tile);
+  if (tiles) state.plan = { tiles, shownAt: performance.now() };
+  camera.follow = true;
+});
+
+const DOT_FADE = 1600; // ms the planned path stays visible
+
+/** The planned path as [{ tile, alpha }], fading out after a click. */
+function pathDots(time) {
+  if (!state.plan) return [];
+  const alpha = 0.9 * (1 - (time - state.plan.shownAt) / DOT_FADE);
+  if (alpha <= 0) return [];
+  return state.plan.tiles.map((tile) => ({ tile, alpha }));
+}
 
 function frame(time) {
   const w = window.innerWidth;
@@ -121,13 +139,17 @@ function frame(time) {
   const step = dt / 800;
   state.dusk += Math.max(-step, Math.min(step, state.duskTarget - state.dusk));
 
+  updateAvatar(avatar, dt);
+  // Follow the middle of the avatar, not its feet.
+  const body = gridToScreen(avatar.x + 0.5, avatar.y + 0.5, state.origin, avatar.h + 24);
+  followPoint(camera, body, { w, h }, dt, cameraLimits);
   state.origin = { x: state.centred.x + camera.x, y: state.centred.y + camera.y };
   // Picking every frame (not only on mousemove) keeps the highlight right
   // when the view scrolls under a still mouse.
   state.hovered = state.mouse ? pickTile(state.mouse) : null;
 
   drawBackdrop(ctx, w, h, state.dusk);
-  drawScene(ctx, room, state.origin, { hovered: state.hovered, time });
+  drawScene(ctx, room, state.origin, { hovered: state.hovered, time, avatar, dots: pathDots(time) });
   const lights = DECOR.filter((item) => item.glow).map((item) => ({
     ...lightPosition(room, item, state.origin),
     glow: item.glow,

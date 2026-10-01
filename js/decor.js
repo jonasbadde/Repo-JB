@@ -4,7 +4,7 @@
 //
 // Each item stands on a tile (gx, gy). Items bigger than one tile give
 // their size in tiles with w (along gx) and d (along gy). These are
-// decoration only for now; picking things up comes in roadmap step 3.
+// decoration only for now; picking things up comes in roadmap step 4.
 
 export const DECOR = [
   // Main room: a low table with a cushion on each long side.
