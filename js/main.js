@@ -3,14 +3,20 @@ import { gridToScreen, tileCorners, pointInPolygon } from './iso.js';
 import { createRoom, tilesInDrawOrder, AREA_NAMES } from './room.js';
 import { drawBackdrop } from './scenery.js';
 import { drawScene } from './renderer.js';
+import { createCamera, attachCamera } from './camera.js';
+import { ROOF_DEPTH, ROOF_RISE } from './wallRenderer.js';
+import { MARGIN, SOIL } from './ground.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const hud = document.getElementById('hud');
 
 const room = createRoom();
+const camera = createCamera();
 const state = {
-  origin: { x: 0, y: 0 }, // where grid (0,0) lands on screen
+  centred: { x: 0, y: 0 }, // where grid (0,0) lands when the building is centred
+  origin: { x: 0, y: 0 }, // the same, after scrolling (centred + camera)
+  world: { w: 0, h: 0 }, // size of the building and its plot on screen
   mouse: null, // last mouse position in CSS pixels, or null
   hovered: null, // the tile under the mouse, or null
 };
@@ -29,14 +35,33 @@ function resize() {
   // Centre the building: its top is the roof ridge behind grid (0,0) and
   // its bottom is the front corner of the map.
   const zero = { x: 0, y: 0 };
-  const top = gridToScreen(-1.3, -1.3, zero, room.wallTop + 46).y;
-  const bottom = gridToScreen(room.width, room.depth, zero).y;
-  const left = gridToScreen(0, room.depth, zero).x;
-  const right = gridToScreen(room.width, 0, zero).x;
-  // (The grass margin around the map may run off screen; that's fine.)
-  state.origin = {
+  const at = (gx, gy, hgt = 0) => gridToScreen(gx, gy, zero, hgt);
+  const top = at(-ROOF_DEPTH, -ROOF_DEPTH, room.wallTop + ROOF_RISE).y;
+  const bottom = at(room.width, room.depth).y;
+  const left = at(0, room.depth).x;
+  const right = at(room.width, 0).x;
+  state.centred = {
     x: (w - (right - left)) / 2 - left,
     y: (h - (bottom - top)) / 2 - top,
+  };
+
+  // The whole world, including the grass plot around the map, so that
+  // scrolling can reach all of it.
+  const plotLeft = at(-MARGIN, room.depth + MARGIN).x;
+  const plotRight = at(room.width + MARGIN, -MARGIN).x;
+  const plotBottom = at(room.width + MARGIN, room.depth + MARGIN).y + SOIL;
+  state.world = { w: plotRight - plotLeft, h: plotBottom - top };
+}
+
+/**
+ * How far the camera may scroll from the centre. If the world is bigger
+ * than the window you can scroll to see all of it; either way you can
+ * scroll a little, but never so far that the house leaves the screen.
+ */
+function cameraLimits() {
+  return {
+    x: Math.max(0, (state.world.w - window.innerWidth) / 2) + window.innerWidth * 0.2,
+    y: Math.max(0, (state.world.h - window.innerHeight) / 2) + window.innerHeight * 0.2,
   };
 }
 
@@ -61,16 +86,18 @@ function tileShape(t) {
   return [top, right, down(right), down(bottom), down(left), left];
 }
 
-canvas.addEventListener('mousemove', (e) => {
+canvas.addEventListener('pointermove', (e) => {
   state.mouse = { x: e.offsetX, y: e.offsetY };
 });
-canvas.addEventListener('mouseleave', () => {
+canvas.addEventListener('pointerleave', () => {
   state.mouse = null;
 });
+attachCamera(canvas, camera, cameraLimits);
 
 function frame(time) {
   const w = window.innerWidth;
   const h = window.innerHeight;
+  state.origin = { x: state.centred.x + camera.x, y: state.centred.y + camera.y };
   // Picking every frame (not only on mousemove) keeps the highlight right
   // when the view scrolls under a still mouse.
   state.hovered = state.mouse ? pickTile(state.mouse) : null;

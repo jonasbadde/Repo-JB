@@ -16,8 +16,8 @@ const RAIL_DROP = 38; // the horizontal beam (nageshi) sits this far below the w
 const RAIL_THICK = 10;
 const WINDOW_HALF_WIDTH = 1.5; // plaster panel around the round window, in tiles
 const LOW_WALL = 22; // height of the cut-down front walls
-const ROOF_DEPTH = 1.3; // how far the roof reaches back, in tiles
-const ROOF_RISE = 46; // how much it climbs over that distance, in pixels
+export const ROOF_DEPTH = 1.3; // how far the roof reaches back, in tiles
+export const ROOF_RISE = 46; // how much it climbs over that distance, in pixels
 const EAVE_END = 8; // the left roof runs on over the veranda to this gy
 
 // ---------------------------------------------------------------------------

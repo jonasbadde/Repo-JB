@@ -9,8 +9,8 @@ import { tileAt } from './room.js';
 import { fillPolygon, line, hash } from './draw.js';
 import { PALETTE as P } from './palette.js';
 
-const MARGIN = 2; // tiles of grass around the map
-const SOIL = 26; // thickness of the soil edge in pixels
+export const MARGIN = 2; // tiles of grass around the map
+export const SOIL = 26; // thickness of the soil edge in pixels
 const FENCE_LOW = 26; // fence height along the front (kept low so it doesn't block the view)
 const FENCE_HIGH = 54; // fence height along the back
 
