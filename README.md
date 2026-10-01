@@ -11,13 +11,22 @@ Play it at https://jonasbadde.github.io/Repo-JB/
 |---|---|---|
 | ![Avatar standing](docs/screenshots/standing.png) | ![Avatar walking](docs/screenshots/walking.png) | ![Avatar sitting at dusk](docs/screenshots/sitting-dusk.png) |
 
+| Furniture menu | Moving: doesn't fit | Moving: fits (turned with R) | Picked up into the tray |
+|---|---|---|---|
+| ![Menu over the table](docs/screenshots/furniture-menu.png) | ![Red footprint over the cushions](docs/screenshots/furniture-blocked.png) | ![Green footprint, table turned](docs/screenshots/furniture-moving.png) | ![Tray at dusk](docs/screenshots/furniture-tray-dusk.png) |
+
 ## Controls
 
 | Input | Does |
 |---|---|
 | Mouse over a tile | Highlights it; the box bottom-left names the area |
 | Click a tile | Walk there along the shortest path (a blocked tile: walk next to it) |
-| Click a cushion | Walk there and sit down facing the table |
+| Click a cushion | Walk there and sit down facing the table (or the way the cushion is turned) |
+| Click the table, a cushion or a paper lantern | Open its menu: **Move**, **Rotate**, **Pick up** |
+| While moving furniture | It follows the mouse, green where it fits and red where it doesn't; click to put it down, `R` turns it, `Esc` puts it back |
+| `R` | Turn the selected furniture a quarter turn |
+| Furoshiki tray (bottom) | Picked-up furniture; click one to place it again |
+| Reset room button | Put all the furniture back where it started |
 | Drag, mouse wheel / trackpad, arrow keys | Scroll the view (and stop following the avatar until the next click) |
 | `Home` | Recentre the view |
 | Day/Dusk button or `N` | Switch the time of day |
@@ -35,10 +44,11 @@ python3 -m http.server 8000
 
 ## Tests
 
-The pathfinding has a few checks that need nothing but Node:
+The pathfinding and furniture rules have checks that need nothing but Node:
 
 ```sh
 node tests/pathfinding.test.mjs
+node tests/furniture.test.mjs
 ```
 
 ## Changing the layout
@@ -47,8 +57,17 @@ The building is drawn as a text map at the top of `js/room.js`, one letter
 per tile (`T` tatami, `K` tokonoma, `S` stone, `W` veranda planks, `.` moss,
 `:` stepping stone, `P` pond). Change the letters and reload. Walls are
 worked out from the map automatically; doorways and steps are listed just
-below it. Furniture and what hangs on the back walls are listed in
-`js/decor.js`.
+below it. The starting furniture and what hangs on the back walls are
+listed in `js/decor.js`.
+
+## Furniture
+
+The table, cushions and paper lanterns can be moved, turned and picked
+up (the vase, stone lantern and maple stay put). Furniture goes indoors
+or on the engawa, on free, level floor, never where the avatar stands,
+and never where it would cut part of the floor off from the rest. Your
+layout is saved in the browser, so it is still there after a reload;
+**Reset room** brings back the original.
 
 ## Code layout
 
@@ -57,7 +76,9 @@ below it. Furniture and what hangs on the back walls are listed in
 | `js/main.js` | Canvas setup, hover picking, click to walk, day/dusk toggle, render loop |
 | `js/iso.js` | Isometric projection math (grid ⇄ screen, with heights) |
 | `js/room.js` | Building data: the tile map, walls, doorways, walkability |
-| `js/decor.js` | Furniture and garden objects, back-wall panels (data only) |
+| `js/decor.js` | Starting furniture and garden objects, back-wall panels (data only) |
+| `js/furniture.js` | Furniture rules: what moves, where it may go, the tray, saving |
+| `js/furnitureUI.js` | Selecting furniture, its menu, moving with a ghost, the tray |
 | `js/pathfinding.js` | A* shortest path in 8 directions, following `canStepBetween` |
 | `js/avatar.js` | The avatar's position, walking, stepping between heights and sitting |
 | `js/avatarRenderer.js` | Draws the avatar (8 directions, walk cycle, sitting) and the path dots |
@@ -77,6 +98,6 @@ below it. Furniture and what hangs on the back walls are listed in
 1. ✅ Isometric room with hover highlight
 2. ✅ Tea house: three areas with raised floors, roof, garden, decorations, scrolling, day/dusk
 3. ✅ Avatar that walks to a clicked tile (A* pathfinding, sitting on cushions, camera follow)
-4. Furniture: place, rotate, pick up
+4. ✅ Furniture: place, rotate, pick up (with a tray and a saved layout)
 5. Chat bubbles
 6. Multiplayer (Node + WebSocket; needs a server, so not on GitHub Pages)
