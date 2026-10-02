@@ -108,7 +108,9 @@ const TOPS = {
     ctx.stroke();
   },
 
-  stone(ctx, { gx, gy }, corners) {
+  stone(ctx, tile, corners) {
+    if (DETAIL >= 3) return drawDetailedStone(ctx, tile, corners);
+    const { gx, gy } = tile;
     // Four square pavers per tile, alternating shades like a cut-stone floor.
     const [top, right, bottom, left] = corners;
     const centre = lerp(top, bottom, 0.5);
@@ -125,7 +127,9 @@ const TOPS = {
     });
   },
 
-  planks(ctx, { gx, gy }, corners) {
+  planks(ctx, tile, corners) {
+    if (DETAIL >= 3) return drawDetailedPlanks(ctx, tile, corners);
+    const { gx, gy } = tile;
     // Boards run along the length of the veranda (the gx direction).
     fillPolygon(ctx, corners, (gx % 2) ? P.planksAlt : P.planks);
     const [top, right, bottom, left] = corners;
@@ -268,6 +272,103 @@ function matAt(room, gx, gy) {
   const whole = partner && partner.floor === 'tatami';
   // ends[0] is the edge at the lower gx (or gy), ends[1] the higher one.
   return { alongX, ends: whole ? (first ? [true, false] : [false, true]) : [true, true] };
+}
+
+/**
+ * Veranda boards running along gx: four per tile, each its own shade, with
+ * grain, now and then a knot, and nail heads where the board ends.
+ */
+function drawDetailedPlanks(ctx, { gx, gy }, corners) {
+  const [top, right, bottom, left] = corners;
+  for (let k = 0; k < 4; k++) {
+    const a0 = lerp(top, left, k / 4);
+    const a1 = lerp(top, left, (k + 1) / 4);
+    const b0 = lerp(right, bottom, k / 4);
+    const b1 = lerp(right, bottom, (k + 1) / 4);
+    const tone = hash(gx, gy * 4 + k, 11);
+    fillPolygon(ctx, [a0, b0, b1, a1], tone > 0.5 ? P.planks : P.planksAlt);
+    if (tone > 0.75) fillPolygon(ctx, [a0, b0, b1, a1], P.lacquerShine); // a paler, sun-bleached board
+    woodGrain(ctx, a0, a1, b0, b1, 2, gx * 31 + gy * 7 + k, P.woodGrain);
+    if (hash(gx, gy * 4 + k, 12) > 0.85) {
+      const c = lerp(lerp(a0, a1, 0.5), lerp(b0, b1, 0.5), 0.2 + hash(gx, k, 13) * 0.6);
+      ctx.fillStyle = P.knot;
+      ctx.beginPath();
+      ctx.ellipse(c.x, c.y, 2.2, 1.1, -0.46, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Nail heads near the board's end, and the gap to the next board.
+    ctx.fillStyle = P.nail;
+    const n = lerp(lerp(a0, a1, 0.5), lerp(b0, b1, 0.5), 0.08);
+    ctx.fillRect(n.x - 0.6, n.y - 0.6, 1.2, 1.2);
+  }
+  ctx.strokeStyle = P.plankGap;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let t = 0.25; t < 1; t += 0.25) line(ctx, lerp(top, left, t), lerp(right, bottom, t));
+  line(ctx, top, left); // where these boards butt against the next tile's
+  ctx.stroke();
+}
+
+/**
+ * Genkan paving: four cut stones per tile with bevelled, slightly worn
+ * edges (light on the top-left, shadow on the bottom-right) and specks.
+ */
+function drawDetailedStone(ctx, { gx, gy }, corners) {
+  const [top, right, bottom, left] = corners;
+  const centre = lerp(top, bottom, 0.5);
+  const mids = [lerp(top, right, 0.5), lerp(right, bottom, 0.5), lerp(bottom, left, 0.5), lerp(left, top, 0.5)];
+  const quads = [
+    [top, mids[0], centre, mids[3]],
+    [mids[0], right, mids[1], centre],
+    [centre, mids[1], bottom, mids[2]],
+    [mids[3], centre, mids[2], left],
+  ];
+  quads.forEach((q, i) => {
+    fillPolygon(ctx, q, hash(gx, gy, i) > 0.5 ? P.stone : P.stoneAlt);
+    const inset = q.map((p) => lerp(p, lerp(q[0], q[2], 0.5), 0.12));
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = P.stoneBevelLight;
+    ctx.beginPath();
+    line(ctx, inset[3], inset[0]);
+    line(ctx, inset[0], inset[1]);
+    ctx.stroke();
+    ctx.strokeStyle = P.stoneJoint;
+    ctx.beginPath();
+    line(ctx, inset[1], inset[2]);
+    line(ctx, inset[2], inset[3]);
+    ctx.stroke();
+    ctx.fillStyle = P.stoneSpeck;
+    for (let k = 0; k < 5; k++) {
+      const p = lerp(lerp(q[0], q[1], hash(gx * 4 + i, gy, k)), lerp(q[3], q[2], hash(gx * 4 + i, gy, k)), hash(gx, gy * 4 + i, k + 5));
+      ctx.fillRect(p.x, p.y, 1, 1);
+    }
+  });
+  strokePolygon(ctx, corners, P.stoneJoint, 1);
+  if (gx === SANDALS.gx && gy === SANDALS.gy) drawSandals(ctx, lerp(top, bottom, 0.5));
+}
+
+// Straw sandals (zori) left at the genkan, by the step up into the house.
+const SANDALS = { gx: 8, gy: 1 };
+
+function drawSandals(ctx, c) {
+  for (const dx of [-5, 4]) {
+    ctx.fillStyle = P.contactShadow;
+    ctx.beginPath();
+    ctx.ellipse(c.x + dx + 1, c.y + 1.5, 4.5, 2.4, -0.46, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = P.straw;
+    ctx.beginPath();
+    ctx.ellipse(c.x + dx, c.y, 4.5, 2.2, -0.46, 0, Math.PI * 2);
+    ctx.fill();
+    // The thong (hanao), in the cushions' plum colour.
+    ctx.strokeStyle = P.cushion;
+    ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    ctx.moveTo(c.x + dx - 2.5, c.y + 0.8);
+    ctx.lineTo(c.x + dx + 1, c.y - 1.2);
+    ctx.lineTo(c.x + dx + 2.5, c.y + 1.2);
+    ctx.stroke();
+  }
 }
 
 function drawMoss(ctx, { gx, gy }, corners, room) {

@@ -54,6 +54,11 @@ export const PALETTE = {
   planks: '#a8774f',
   planksAlt: '#9c6d47',
   plankGap: 'rgba(50, 30, 20, 0.45)',
+  knot: 'rgba(60, 35, 20, 0.55)',
+  nail: 'rgba(40, 35, 35, 0.7)',
+  stoneBevelLight: 'rgba(255, 252, 240, 0.35)',
+  stoneSpeck: 'rgba(80, 70, 60, 0.35)',
+  straw: '#d8c58e', // straw sandals
 
   // Garden and surroundings.
   moss: '#86a868',
