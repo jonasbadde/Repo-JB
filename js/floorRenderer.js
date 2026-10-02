@@ -4,7 +4,6 @@ import { TILE_W, gridToScreen, tileCorners } from './iso.js';
 import { tileAt } from './room.js';
 import { fillPolygon, strokePolygon, polygonPath, lerp, line, hash, woodGrain } from './draw.js';
 import { PALETTE as P } from './palette.js';
-import { DETAIL } from './detail.js';
 
 export function drawTile(ctx, room, tile, origin, time) {
   drawSides(ctx, room, tile, origin);
@@ -48,21 +47,19 @@ function drawSides(ctx, room, tile, origin) {
     } else {
       // Stone footing under the house, with a wooden sill beam on top.
       fillPolygon(ctx, face, lit ? P.foundation : P.foundationDark);
-      if (DETAIL >= 3) {
-        // Cut blocks in two courses, with specks and a darker foot.
-        ctx.strokeStyle = P.stoneJoint;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        const midH = 6 + (drop - 6) / 2;
-        line(ctx, { x: a.x, y: a.y + midH }, { x: b.x, y: b.y + midH });
-        const off = lerp(a, b, 0.25 + hash(gx, gy, 9) * 0.2);
-        line(ctx, { x: off.x, y: off.y + midH }, { x: off.x, y: off.y + drop });
-        ctx.stroke();
-        const g = ctx.createLinearGradient(0, b.y + drop - 8, 0, b.y + drop);
-        g.addColorStop(0, P.clear);
-        g.addColorStop(1, P.cornerShade);
-        fillPolygon(ctx, face, g);
-      }
+      // Cut blocks in two courses, with specks and a darker foot.
+      ctx.strokeStyle = P.stoneJoint;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      const midH = 6 + (drop - 6) / 2;
+      line(ctx, { x: a.x, y: a.y + midH }, { x: b.x, y: b.y + midH });
+      const off = lerp(a, b, 0.25 + hash(gx, gy, 9) * 0.2);
+      line(ctx, { x: off.x, y: off.y + midH }, { x: off.x, y: off.y + drop });
+      ctx.stroke();
+      const g = ctx.createLinearGradient(0, b.y + drop - 8, 0, b.y + drop);
+      g.addColorStop(0, P.clear);
+      g.addColorStop(1, P.cornerShade);
+      fillPolygon(ctx, face, g);
       ctx.strokeStyle = P.stoneJoint;
       ctx.lineWidth = 1;
       ctx.beginPath();
@@ -89,73 +86,24 @@ function drawPost(ctx, along, origin, base, top, parity) {
 
 const TOPS = {
   tatami(ctx, tile, corners, origin, room) {
-    if (DETAIL >= 1) return drawDetailedTatami(ctx, tile, corners, room);
-    const { gx, gy } = tile;
-    fillPolygon(ctx, corners, (gx + gy) % 2 ? P.tatamiAlt : P.tatami);
-
-    // Woven-straw texture: a few lines parallel to one pair of edges.
-    // Alternating direction tile to tile mimics how tatami are laid.
-    const [top, right, bottom, left] = corners;
-    const [a0, a1, b0, b1] = (gx + gy) % 2 ? [top, left, right, bottom] : [top, right, left, bottom];
-    ctx.strokeStyle = P.tatamiWeave;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    for (let t = 0.2; t < 1; t += 0.2) line(ctx, lerp(a0, b0, t), lerp(a1, b1, t));
-    ctx.stroke();
-
-    strokePolygon(ctx, corners, P.tatamiEdge, 1);
+    drawTatami(ctx, tile, corners, room);
   },
 
   tokonoma(ctx, tile, corners) {
     // The alcove floor is one polished board, a step above the tatami.
     fillPolygon(ctx, corners, P.woodLight);
     const [top, right, bottom, left] = corners;
-    if (DETAIL >= 3) {
-      woodGrain(ctx, top, left, right, bottom, 7, tile.gx + 50, P.woodGrain);
-      // A soft reflection on the polished wood.
-      fillPolygon(ctx, [lerp(top, right, 0.3), lerp(top, right, 0.5), lerp(left, bottom, 0.4), lerp(left, bottom, 0.2)], P.lacquerShine);
-      return;
-    }
-    ctx.strokeStyle = P.wood;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    for (let t = 0.3; t < 1; t += 0.35) line(ctx, lerp(top, left, t), lerp(right, bottom, t));
-    ctx.stroke();
+    woodGrain(ctx, top, left, right, bottom, 7, tile.gx + 50, P.woodGrain);
+    // A soft reflection on the polished wood.
+    fillPolygon(ctx, [lerp(top, right, 0.3), lerp(top, right, 0.5), lerp(left, bottom, 0.4), lerp(left, bottom, 0.2)], P.lacquerShine);
   },
 
   stone(ctx, tile, corners) {
-    if (DETAIL >= 3) return drawDetailedStone(ctx, tile, corners);
-    const { gx, gy } = tile;
-    // Four square pavers per tile, alternating shades like a cut-stone floor.
-    const [top, right, bottom, left] = corners;
-    const centre = lerp(top, bottom, 0.5);
-    const mids = [lerp(top, right, 0.5), lerp(right, bottom, 0.5), lerp(bottom, left, 0.5), lerp(left, top, 0.5)];
-    const quads = [
-      [top, mids[0], centre, mids[3]],
-      [mids[0], right, mids[1], centre],
-      [centre, mids[1], bottom, mids[2]],
-      [mids[3], centre, mids[2], left],
-    ];
-    quads.forEach((q, i) => {
-      fillPolygon(ctx, q, hash(gx, gy, i) > 0.5 ? P.stone : P.stoneAlt);
-      strokePolygon(ctx, q, P.stoneJoint, 1);
-    });
+    drawStone(ctx, tile, corners);
   },
 
   planks(ctx, tile, corners) {
-    if (DETAIL >= 3) return drawDetailedPlanks(ctx, tile, corners);
-    const { gx, gy } = tile;
-    // Boards run along the length of the veranda (the gx direction).
-    fillPolygon(ctx, corners, (gx % 2) ? P.planksAlt : P.planks);
-    const [top, right, bottom, left] = corners;
-    ctx.strokeStyle = P.plankGap;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    for (let t = 0.25; t < 1; t += 0.25) line(ctx, lerp(top, left, t), lerp(right, bottom, t));
-    // A butt joint where two boards meet, at a different spot on each row.
-    const j = hash(gx, gy);
-    line(ctx, lerp(top, right, j), lerp(left, bottom, j));
-    ctx.stroke();
+    drawPlanks(ctx, tile, corners);
   },
 
   moss(ctx, tile, corners, origin, room) {
@@ -169,13 +117,11 @@ const TOPS = {
     const [top, , bottom] = corners;
     const c = lerp(top, bottom, 0.5);
     const r = TILE_W * (0.26 + hash(tile.gx, tile.gy, 3) * 0.06);
-    if (DETAIL >= 3) {
-      // The stone sits slightly sunk in the moss, which darkens around it.
-      ctx.fillStyle = P.contactShadow;
-      ctx.beginPath();
-      ctx.ellipse(c.x - 1, c.y + 3, r + 3, r / 2 + 2, 0, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    // The stone sits slightly sunk in the moss, which darkens around it.
+    ctx.fillStyle = P.contactShadow;
+    ctx.beginPath();
+    ctx.ellipse(c.x - 1, c.y + 3, r + 3, r / 2 + 2, 0, 0, Math.PI * 2);
+    ctx.fill();
     ctx.fillStyle = P.steppingStone;
     ctx.beginPath();
     ctx.ellipse(c.x, c.y + 2, r, r / 2, 0, 0, Math.PI * 2);
@@ -184,25 +130,23 @@ const TOPS = {
     ctx.beginPath();
     ctx.ellipse(c.x, c.y - 1, r, r / 2, 0, 0, Math.PI * 2);
     ctx.fill();
-    if (DETAIL >= 3) {
-      // A lit rim on the upper right, specks, and a small chip out of the edge.
-      ctx.strokeStyle = P.stoneBevelLight;
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.ellipse(c.x, c.y - 1, r - 1.5, r / 2 - 1, 0, -Math.PI * 0.85, -Math.PI * 0.1);
-      ctx.stroke();
-      ctx.fillStyle = P.stoneSpeck;
-      for (let i = 0; i < 9; i++) {
-        const a = hash(tile.gx, tile.gy, 20 + i) * Math.PI * 2;
-        const d = Math.sqrt(hash(tile.gx, tile.gy, 30 + i)) * 0.85;
-        ctx.fillRect(c.x + Math.cos(a) * r * d, c.y - 1 + Math.sin(a) * (r / 2) * d, 1, 1);
-      }
-      const chip = hash(tile.gx, tile.gy, 40) * Math.PI;
-      ctx.fillStyle = P.steppingStone;
-      ctx.beginPath();
-      ctx.ellipse(c.x + Math.cos(chip) * r * 0.92, c.y - 1 + Math.sin(chip) * r * 0.46, 3, 1.6, 0, 0, Math.PI * 2);
-      ctx.fill();
+    // A lit rim on the upper right, specks, and a small chip out of the edge.
+    ctx.strokeStyle = P.stoneBevelLight;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.ellipse(c.x, c.y - 1, r - 1.5, r / 2 - 1, 0, -Math.PI * 0.85, -Math.PI * 0.1);
+    ctx.stroke();
+    ctx.fillStyle = P.stoneSpeck;
+    for (let i = 0; i < 9; i++) {
+      const a = hash(tile.gx, tile.gy, 20 + i) * Math.PI * 2;
+      const d = Math.sqrt(hash(tile.gx, tile.gy, 30 + i)) * 0.85;
+      ctx.fillRect(c.x + Math.cos(a) * r * d, c.y - 1 + Math.sin(a) * (r / 2) * d, 1, 1);
     }
+    const chip = hash(tile.gx, tile.gy, 40) * Math.PI;
+    ctx.fillStyle = P.steppingStone;
+    ctx.beginPath();
+    ctx.ellipse(c.x + Math.cos(chip) * r * 0.92, c.y - 1 + Math.sin(chip) * r * 0.46, 3, 1.6, 0, 0, Math.PI * 2);
+    ctx.fill();
   },
 
   water(ctx, tile, corners, origin, room, time) {
@@ -213,7 +157,7 @@ const TOPS = {
     g.addColorStop(0, P.waterDeep);
     g.addColorStop(1, P.water);
     fillPolygon(ctx, corners, g);
-    if (DETAIL >= 3) drawPondLife(ctx, tile, corners, origin, time);
+    drawPondLife(ctx, tile, corners, origin, time);
 
     // Glints that slowly drift, so the pond looks alive.
     ctx.strokeStyle = P.waterShine;
@@ -253,9 +197,9 @@ const TOPS = {
  * A tatami mat with its woven straw, the cloth border (heri) along its long
  * sides, light falling from the right and paler patches where people walk.
  */
-function drawDetailedTatami(ctx, { gx, gy }, corners, room) {
+function drawTatami(ctx, { gx, gy }, corners, room) {
   const [top, right, bottom, left] = corners;
-  const mat = DETAIL >= 3 ? matAt(room, gx, gy) : { alongX: !((gx + gy) % 2), ends: [true, true] };
+  const mat = matAt(room, gx, gy);
   const alt = mat.alongX ? 0 : 1;
   const sun = ctx.createLinearGradient(left.x, left.y, right.x, right.y);
   sun.addColorStop(0, alt ? P.tatamiAlt : P.tatami);
@@ -320,7 +264,7 @@ function matAt(room, gx, gy) {
  * Veranda boards running along gx: four per tile, each its own shade, with
  * grain, now and then a knot, and nail heads where the board ends.
  */
-function drawDetailedPlanks(ctx, { gx, gy }, corners) {
+function drawPlanks(ctx, { gx, gy }, corners) {
   const [top, right, bottom, left] = corners;
   for (let k = 0; k < 4; k++) {
     const a0 = lerp(top, left, k / 4);
@@ -355,7 +299,7 @@ function drawDetailedPlanks(ctx, { gx, gy }, corners) {
  * Genkan paving: four cut stones per tile with bevelled, slightly worn
  * edges (light on the top-left, shadow on the bottom-right) and specks.
  */
-function drawDetailedStone(ctx, { gx, gy }, corners) {
+function drawStone(ctx, { gx, gy }, corners) {
   const [top, right, bottom, left] = corners;
   const centre = lerp(top, bottom, 0.5);
   const mids = [lerp(top, right, 0.5), lerp(right, bottom, 0.5), lerp(bottom, left, 0.5), lerp(left, top, 0.5)];
@@ -421,7 +365,7 @@ const KOI = [
 ];
 
 /**
- * What makes the pond look alive at level 3: koi under the surface, the
+ * What makes the pond look alive: koi under the surface, the
  * sky's reflection, and rings spreading where something touched the water.
  * Drawn per water tile, clipped to it, so the pieces join up seamlessly.
  */
@@ -476,15 +420,13 @@ function drawPondLife(ctx, tile, corners, origin, time) {
 function drawMoss(ctx, { gx, gy }, corners, room) {
   fillPolygon(ctx, corners, hash(gx, gy, 1) > 0.5 ? P.moss : P.mossAlt);
   const [top, right, bottom, left] = corners;
-  if (DETAIL >= 3) {
-    // Mottled moss: a few soft darker clumps and sunlit patches.
-    for (let i = 0; i < 4; i++) {
-      const p = lerp(lerp(top, right, 0.2 + hash(gx, gy, 50 + i) * 0.6), lerp(left, bottom, 0.2 + hash(gx, gy, 50 + i) * 0.6), 0.2 + hash(gx, gy, 60 + i) * 0.6);
-      ctx.fillStyle = i % 2 ? P.mossLight : P.mossDeep;
-      ctx.beginPath();
-      ctx.ellipse(p.x, p.y, 10 + hash(gx, gy, 70 + i) * 8, 4.5 + hash(gx, gy, 80 + i) * 3, 0, 0, Math.PI * 2);
-      ctx.fill();
-    }
+  // Mottled moss: a few soft darker clumps and sunlit patches.
+  for (let i = 0; i < 4; i++) {
+    const p = lerp(lerp(top, right, 0.2 + hash(gx, gy, 50 + i) * 0.6), lerp(left, bottom, 0.2 + hash(gx, gy, 50 + i) * 0.6), 0.2 + hash(gx, gy, 60 + i) * 0.6);
+    ctx.fillStyle = i % 2 ? P.mossLight : P.mossDeep;
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y, 10 + hash(gx, gy, 70 + i) * 8, 4.5 + hash(gx, gy, 80 + i) * 3, 0, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   // Shadow at the foot of the house: if the tile behind is raised, darken

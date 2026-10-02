@@ -1,6 +1,6 @@
-// Soft light and shade that make the scene feel lived-in (detail level 2):
-// contact shadows under furniture, darker corners where the floor meets a
-// wall, and patches of daylight that fall through the shoji.
+// Soft light and shade that make the scene feel lived-in: contact and cast
+// shadows under furniture, darker corners where the floor meets a wall,
+// patches and beams of daylight through the shoji, and a paper grain.
 //
 // These all lie on the floor and can stretch over several tiles, but the
 // scene is drawn tile by tile, back to front. So each one is drawn once per
@@ -11,7 +11,6 @@ import { tileAt } from './room.js';
 import { itemTiles, itemSize } from './decor.js';
 import { polygonPath, fillPolygon } from './draw.js';
 import { PALETTE as P } from './palette.js';
-import { DETAIL } from './detail.js';
 import { hash } from './draw.js';
 
 const DEPTH = 0.05; // after the floor tile, before highlights and objects
@@ -42,7 +41,7 @@ export function addAmbience(list, ctx, room, origin, dusk) {
     const m = { paperLantern: 0.28, cushion: 0.16, stoneLantern: 0.22, vase: 0.3 }[item.type] ?? 0.1;
     const shape = [[item.gx + m, item.gy + m], [item.gx + w - m, item.gy + m], [item.gx + w - m, item.gy + d - m], [item.gx + m, item.gy + d - m]];
     for (const t of itemTiles(item)) addClipped(list, ctx, room, origin, t, (floor) => softShadow(ctx, origin, shape, floor));
-    if (DETAIL >= 3 && HEIGHT[item.type] && dusk < 1) addCastShadow(list, ctx, room, origin, item, shape, dusk);
+    if (HEIGHT[item.type] && dusk < 1) addCastShadow(list, ctx, room, origin, item, shape, dusk);
   }
 
   for (const tile of room.tiles) {
@@ -183,7 +182,7 @@ function cornerShade(ctx, tile, origin) {
 }
 
 // ---------------------------------------------------------------------------
-// Detail level 3: light beams with dust, and paper grain over everything.
+// Light beams with dust, and paper grain over everything.
 
 const BEAM_TOP = 64 + 76; // where the light enters, pixels above the main floor's ground level
 const BEAM_BOTTOM = 64;

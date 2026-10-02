@@ -10,7 +10,6 @@ import { WALL_PANELS } from './decor.js';
 import { drawWindowView } from './scenery.js';
 import { fillPolygon, line, hash, woodGrain } from './draw.js';
 import { PALETTE as P } from './palette.js';
-import { DETAIL } from './detail.js';
 
 const KICK = 24; // wooden kick panel at the bottom of a wall, above its floor
 const RAIL_DROP = 38; // the horizontal beam (nageshi) sits this far below the wall top
@@ -125,17 +124,15 @@ function drawWallRun(ctx, room, origin, { side, u0, u1, base }) {
   wallQuad(ctx, side, origin, u0, u1, base, base + KICK, P.wood);
   wallQuad(ctx, side, origin, u0, u1, railHigh, top, P.plaster);
   wallQuad(ctx, side, origin, u0, u1, railLow, railHigh, P.woodDark);
-  if (DETAIL >= 3) {
-    wallGrain(ctx, side, origin, u0, u1, base, base + KICK, true, 6);
-    plasterTexture(ctx, side, origin, u0, u1, railHigh, top - 6);
-    wallGrain(ctx, side, origin, u0, u1, railLow, railHigh, true, 3);
-    // The rail's lower edge catches the light.
-    ctx.strokeStyle = P.latticeLight;
-    ctx.lineWidth = 0.8;
-    ctx.beginPath();
-    wallLine(ctx, side, origin, u0, railLow + 0.5, u1, railLow + 0.5);
-    ctx.stroke();
-  }
+  wallGrain(ctx, side, origin, u0, u1, base, base + KICK, true, 6);
+  plasterTexture(ctx, side, origin, u0, u1, railHigh, top - 6);
+  wallGrain(ctx, side, origin, u0, u1, railLow, railHigh, true, 3);
+  // The rail's lower edge catches the light.
+  ctx.strokeStyle = P.latticeLight;
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  wallLine(ctx, side, origin, u0, railLow + 0.5, u1, railLow + 0.5);
+  ctx.stroke();
 
   // Posts every two tiles, except where they would cut through the window
   // or the tokonoma (those have their own frames).
@@ -144,7 +141,7 @@ function drawWallRun(ctx, room, origin, { side, u0, u1, base }) {
     const inside = panels.find((p) => u > p.u0 && u < p.u1);
     if (inside && (inside.kind === 'window' || inside.kind === 'tokonoma')) continue;
     wallQuad(ctx, side, origin, u - 0.08, u, base, top, P.woodDark);
-    if (DETAIL >= 3) wallGrain(ctx, side, origin, u - 0.08, u, base, top, false, 2);
+    wallGrain(ctx, side, origin, u - 0.08, u, base, top, false, 2);
   }
   wallQuad(ctx, side, origin, u0, u1, top - 6, top, P.woodDark);
 }
@@ -171,7 +168,7 @@ function shojiPaper(ctx, side, origin, u0, u1, h0, h1) {
 const PANELS = {
   shoji(ctx, side, origin, u0, u1, h0, h1) {
     wallQuad(ctx, side, origin, u0, u1, h0, h1, side === 'left' ? P.shojiShade : P.shoji);
-    if (DETAIL >= 1) shojiPaper(ctx, side, origin, u0, u1, h0, h1);
+    shojiPaper(ctx, side, origin, u0, u1, h0, h1);
     // Kumiko lattice: thin wooden strips over the paper.
     ctx.strokeStyle = P.wood;
     ctx.lineWidth = 1;
@@ -179,36 +176,32 @@ const PANELS = {
     for (let u = u0 + 0.5; u < u1; u += 0.5) wallLine(ctx, side, origin, u, h0, u, h1);
     for (let h = h0 + 22; h < h1; h += 22) wallLine(ctx, side, origin, u0, h, u1, h);
     ctx.stroke();
-    if (DETAIL >= 1) {
-      // Each strip catches the light on one edge, which makes it read as wood.
-      ctx.strokeStyle = P.latticeLight;
-      ctx.lineWidth = 0.6;
-      ctx.beginPath();
-      for (let u = u0 + 0.5; u < u1; u += 0.5) wallLine(ctx, side, origin, u + 0.02, h0, u + 0.02, h1);
-      for (let h = h0 + 22; h < h1; h += 22) wallLine(ctx, side, origin, u0, h + 1, u1, h + 1);
-      ctx.stroke();
-      // Heavier frame where one sliding panel meets the next.
-      for (let u = Math.ceil(u0); u <= u1; u += 1) wallQuad(ctx, side, origin, u - 0.04, u, h0, h1, P.wood);
-    }
+    // Each strip catches the light on one edge, which makes it read as wood.
+    ctx.strokeStyle = P.latticeLight;
+    ctx.lineWidth = 0.6;
+    ctx.beginPath();
+    for (let u = u0 + 0.5; u < u1; u += 0.5) wallLine(ctx, side, origin, u + 0.02, h0, u + 0.02, h1);
+    for (let h = h0 + 22; h < h1; h += 22) wallLine(ctx, side, origin, u0, h + 1, u1, h + 1);
+    ctx.stroke();
+    // Heavier frame where one sliding panel meets the next.
+    for (let u = Math.ceil(u0); u <= u1; u += 1) wallQuad(ctx, side, origin, u - 0.04, u, h0, h1, P.wood);
   },
 
   fusuma(ctx, side, origin, u0, u1, h0, h1) {
     wallQuad(ctx, side, origin, u0, u1, h0, h1, P.fusuma);
-    if (DETAIL >= 3) {
-      // A far, paler range behind the main one gives the painting depth,
-      // and flecks of gold leaf catch the light.
-      const far = (u) => h0 + (h1 - h0) * (0.72 + 0.12 * Math.sin(u * 3.3 + 1) + 0.05 * Math.sin(u * 9.1));
-      const ridge = [wallPoint(side, u0, h0 + 8, origin)];
-      for (let u = u0; u <= u1 + 0.001; u += 0.1) ridge.push(wallPoint(side, u, far(u), origin));
-      ridge.push(wallPoint(side, u1, h0 + 8, origin));
-      ctx.globalAlpha = 0.45;
-      fillPolygon(ctx, ridge, P.fusumaInk);
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = P.goldFleck;
-      for (let i = 0; i < (u1 - u0) * 16; i++) {
-        const p = wallPoint(side, u0 + hash(u0, i, 8) * (u1 - u0), h0 + 4 + hash(u0, i, 9) * 30, origin);
-        ctx.fillRect(p.x, p.y, 1.5, 1);
-      }
+    // A far, paler range behind the main one gives the painting depth,
+    // and flecks of gold leaf catch the light.
+    const far = (u) => h0 + (h1 - h0) * (0.72 + 0.12 * Math.sin(u * 3.3 + 1) + 0.05 * Math.sin(u * 9.1));
+    const ridge = [wallPoint(side, u0, h0 + 8, origin)];
+    for (let u = u0; u <= u1 + 0.001; u += 0.1) ridge.push(wallPoint(side, u, far(u), origin));
+    ridge.push(wallPoint(side, u1, h0 + 8, origin));
+    ctx.globalAlpha = 0.45;
+    fillPolygon(ctx, ridge, P.fusumaInk);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = P.goldFleck;
+    for (let i = 0; i < (u1 - u0) * 16; i++) {
+      const p = wallPoint(side, u0 + hash(u0, i, 8) * (u1 - u0), h0 + 4 + hash(u0, i, 9) * 30, origin);
+      ctx.fillRect(p.x, p.y, 1.5, 1);
     }
 
     // A painted range of misty mountains running across all the doors.
@@ -341,7 +334,7 @@ function drawRoof(ctx, room, origin, rightEnd) {
     const [i0, i1] = inner;
     const [o0, o1] = outer;
     fillPolygon(ctx, [i0, i1, o1, o0], shade);
-    if (DETAIL >= 3) roofTiles(ctx, i0, i1, o0, o1);
+    roofTiles(ctx, i0, i1, o0, o1);
 
     // Rows of tiles: lines running along the roof at even steps up the slope.
     ctx.strokeStyle = P.roofRidge;
@@ -434,23 +427,21 @@ export function drawLowWall(ctx, room, wall, origin) {
   const lit = axis === 'x'; // walls facing +gx catch the light
   fillPolygon(ctx, [pt(p0, base), pt(p1, base), pt(p1, base + LOW_WALL), pt(p0, base + LOW_WALL)], entrance ? P.woodLight : lit ? P.shoji : P.shojiShade);
   fillPolygon(ctx, [pt(p0, base), pt(p1, base), pt(p1, base + 8), pt(p0, base + 8)], P.wood);
-  if (DETAIL >= 3) {
-    if (entrance) {
-      woodGrain(ctx, pt(p0, base + 8), pt(p0, base + LOW_WALL), pt(p1, base + 8), pt(p1, base + LOW_WALL), 4, gx * 13 + gy, P.woodGrain);
-    } else {
-      // The lower part of a shoji: paper between thin vertical strips.
-      ctx.strokeStyle = P.wood;
-      ctx.lineWidth = 0.8;
-      ctx.beginPath();
-      for (const t of [0.25, 0.5, 0.75]) {
-        const q = { x: pt(p0, 0).x + (pt(p1, 0).x - pt(p0, 0).x) * t, y: 0 };
-        const lo = gridToScreen(p0[0] + (p1[0] - p0[0]) * t, p0[1] + (p1[1] - p0[1]) * t, origin, base + 8);
-        line(ctx, lo, { x: q.x, y: lo.y - (LOW_WALL - 8) });
-      }
-      ctx.stroke();
+  if (entrance) {
+    woodGrain(ctx, pt(p0, base + 8), pt(p0, base + LOW_WALL), pt(p1, base + 8), pt(p1, base + LOW_WALL), 4, gx * 13 + gy, P.woodGrain);
+  } else {
+    // The lower part of a shoji: paper between thin vertical strips.
+    ctx.strokeStyle = P.wood;
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    for (const t of [0.25, 0.5, 0.75]) {
+      const q = { x: pt(p0, 0).x + (pt(p1, 0).x - pt(p0, 0).x) * t, y: 0 };
+      const lo = gridToScreen(p0[0] + (p1[0] - p0[0]) * t, p0[1] + (p1[1] - p0[1]) * t, origin, base + 8);
+      line(ctx, lo, { x: q.x, y: lo.y - (LOW_WALL - 8) });
     }
-    woodGrain(ctx, pt(p0, base), pt(p0, base + 8), pt(p1, base), pt(p1, base + 8), 2, gx * 17 + gy * 3, P.woodGrain);
+    ctx.stroke();
   }
+  woodGrain(ctx, pt(p0, base), pt(p0, base + 8), pt(p1, base), pt(p1, base + 8), 2, gx * 17 + gy * 3, P.woodGrain);
 
   // The cut top of the wall and a post at each end.
   ctx.strokeStyle = P.woodDark;

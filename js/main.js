@@ -9,7 +9,6 @@ import { MARGIN, SOIL } from './ground.js';
 import { lightPosition } from './decorRenderer.js';
 import { drawLighting } from './lighting.js';
 import { drawGrain } from './ambience.js';
-import { DETAIL } from './detail.js';
 import { createAvatar, walkTo, updateAvatar } from './avatar.js';
 import { createFurnitureEditor } from './furnitureUI.js';
 import { loadLayout } from './furniture.js';
@@ -181,7 +180,7 @@ function frame(time) {
     glow: item.glow,
   }));
   drawLighting(ctx, w, h, lights, state.dusk, time);
-  if (DETAIL >= 3) drawGrain(ctx, w, h);
+  drawGrain(ctx, w, h);
 
   const t = state.hovered;
   hud.textContent =

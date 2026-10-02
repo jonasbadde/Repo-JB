@@ -8,7 +8,6 @@ import { gridToScreen } from './iso.js';
 import { tileAt } from './room.js';
 import { fillPolygon, line, hash, leafyBlob } from './draw.js';
 import { PALETTE as P } from './palette.js';
-import { DETAIL } from './detail.js';
 
 export const MARGIN = 2; // tiles of grass around the map
 export const SOIL = 26; // thickness of the soil edge in pixels
@@ -127,13 +126,6 @@ function drawTree(ctx, foot, size) {
     [0.15, -2.25, 0.6, P.treeLight],
   ];
   for (const [i, [dx, dy, r, color]] of blobs.entries()) {
-    if (DETAIL >= 3) {
-      leafyBlob(ctx, foot.x + dx * s, foot.y + dy * s, r * s * 0.75, color, P.treeLight, P.treeShadow, Math.round(foot.x) + i);
-      continue;
-    }
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(foot.x + dx * s, foot.y + dy * s, r * s * 0.75, 0, Math.PI * 2);
-    ctx.fill();
+    leafyBlob(ctx, foot.x + dx * s, foot.y + dy * s, r * s * 0.75, color, P.treeLight, P.treeShadow, Math.round(foot.x) + i);
   }
 }

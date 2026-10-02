@@ -146,7 +146,7 @@ export const PALETTE = {
   eye: '#2f2a26',
   pathDot: '#fff3c4', // the planned walk, shown briefly on the floor
 
-  // Light and small life (detail level 2).
+  // Light and small life.
   contactShadow: 'rgba(40, 25, 15, 0.35)', // soft shadow right under furniture
   cornerShade: 'rgba(40, 25, 15, 0.22)', // where floor meets wall
   sunPatch: 'rgba(255, 238, 190, 0.32)', // daylight through the shoji

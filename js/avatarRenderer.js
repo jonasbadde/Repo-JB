@@ -7,7 +7,6 @@
 // cover all 8 directions.
 import { gridToScreen } from './iso.js';
 import { PALETTE as P } from './palette.js';
-import { DETAIL } from './detail.js';
 
 const SCALE = 1.2; // the shapes below are ~40px tall; this makes ~48px
 
@@ -27,7 +26,7 @@ export function drawAvatar(ctx, avatar, origin, dusk = 0) {
 
   ctx.save();
   ctx.translate(feet.x, feet.y);
-  if (DETAIL >= 3 && dusk < 1) {
+  if (dusk < 1) {
     // A shadow cast away from the daylight, like the furniture's (in
     // screen space, before the figure is mirrored).
     ctx.globalAlpha = 0.35 * (1 - dusk);
@@ -86,7 +85,7 @@ function drawRobe(ctx, toward, swing, top, hem) {
   poly(ctx, [[-6, top], [6, top], [8, hem], [-8, hem]], P.yukata);
   poly(ctx, [[-6, top], [-3, top], [-4, hem], [-8, hem]], P.yukataShade); // light comes from the right
   drawPattern(ctx, top, hem);
-  if (DETAIL >= 3) drawFolds(ctx, top, hem);
+  drawFolds(ctx, top, hem);
 
   if (toward > 0) {
     // Collar: the left panel crosses over the right, as yukata are worn.
@@ -101,15 +100,13 @@ function drawRobe(ctx, toward, swing, top, hem) {
 
   const obi = top + 8; // top edge of the sash
   poly(ctx, [[-6.6, obi], [6.6, obi], [6.9, obi + 4.5], [-6.9, obi + 4.5]], P.moss);
-  if (DETAIL >= 3) {
-    // The obi's woven stripe.
-    ctx.strokeStyle = P.obiStripe;
-    ctx.lineWidth = 0.7;
-    ctx.beginPath();
-    ctx.moveTo(-6.7, obi + 2.2);
-    ctx.lineTo(6.7, obi + 2.2);
-    ctx.stroke();
-  }
+  // The obi's woven stripe.
+  ctx.strokeStyle = P.obiStripe;
+  ctx.lineWidth = 0.7;
+  ctx.beginPath();
+  ctx.moveTo(-6.7, obi + 2.2);
+  ctx.lineTo(6.7, obi + 2.2);
+  ctx.stroke();
   if (toward < 0) {
     // The obi is tied in a bow at the back.
     poly(ctx, [[-5, obi - 0.5], [0, obi + 2], [-5, obi + 5]], P.obiKnot);
@@ -188,7 +185,7 @@ function drawHead(ctx, y, toward) {
   if (toward < 0) {
     ellipse(ctx, 0, y, r, r, P.hair);
     ellipse(ctx, bunX, y - r + 1, 3, 0.8, P.hairTie);
-    if (DETAIL >= 3) hairSheen(ctx, y, r);
+    hairSheen(ctx, y, r);
     return;
   }
 
@@ -212,13 +209,13 @@ function drawHead(ctx, y, toward) {
   ctx.closePath();
   ctx.fill();
   ellipse(ctx, bunX, y - r + 1, 3, 0.8, P.hairTie);
-  if (DETAIL >= 3) hairSheen(ctx, y, r);
+  hairSheen(ctx, y, r);
 
   // Eyes and rosy cheeks; facing a little to the right moves them over.
   const eyes = toward === 0 ? [5.5] : [-1.4, 5];
   for (const ex of eyes) {
     ellipse(ctx, ex, y + 1.5, 1.1, 1.6, P.eye);
-    if (DETAIL >= 3) ellipse(ctx, ex + 0.35, y + 0.9, 0.45, 0.45, P.collar); // a glint in the eye
+    ellipse(ctx, ex + 0.35, y + 0.9, 0.45, 0.45, P.collar); // a glint in the eye
     ellipse(ctx, ex + 1.3, y + 4.5, 1.6, 1, P.blush);
   }
 }

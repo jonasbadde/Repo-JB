@@ -8,7 +8,6 @@ import { tileAt } from './room.js';
 import { fillPolygon, line, hash, leafyBlob } from './draw.js';
 import { PALETTE as P } from './palette.js';
 import { itemSize } from './decor.js';
-import { DETAIL } from './detail.js';
 
 export function drawItem(ctx, room, item, origin) {
   drawItemAt(ctx, item, origin, tileAt(room, item.gx, item.gy).height);
@@ -40,7 +39,7 @@ function box(ctx, origin, x0, y0, x1, y1, h0, h1, colors) {
   const rightFace = [p(x1, y0, h0), p(x1, y1, h0), p(x1, y1, h1), p(x1, y0, h1)];
   fillPolygon(ctx, leftFace, colors.left);
   fillPolygon(ctx, rightFace, colors.right);
-  if (DETAIL >= 3 && h1 - h0 > 3) {
+  if (h1 - h0 > 3) {
     // Faces get darker towards the floor, where less light reaches.
     for (const face of [leftFace, rightFace]) {
       const lo = face[0];
@@ -73,15 +72,15 @@ const ITEMS = {
       box(ctx, origin, lx, ly, lx + s, ly + s, floor, floor + 12, legs);
     }
     box(ctx, origin, x0, y0, x1, y1, floor + 12, floor + 16, { top: P.lacquer, left: P.woodDark, right: P.wood });
-    if (DETAIL >= 1) lacquerTop(ctx, origin, x0, y0, x1, y1, floor + 16, w >= d);
-    if (DETAIL >= 2) teaSet(ctx, gridToScreen(gx + w / 2, gy + d / 2, origin, floor + 16));
-    if (DETAIL >= 3) steam(ctx, gridToScreen(gx + w / 2, gy + d / 2, origin, floor + 16));
+    lacquerTop(ctx, origin, x0, y0, x1, y1, floor + 16, w >= d);
+    teaSet(ctx, gridToScreen(gx + w / 2, gy + d / 2, origin, floor + 16));
+    steam(ctx, gridToScreen(gx + w / 2, gy + d / 2, origin, floor + 16));
   },
 
   cushion(ctx, { gx, gy }, origin, floor) {
     // Zabuton: a flat, square floor cushion.
     centredBox(ctx, origin, gx, gy, 0.6, floor, floor + 5, { top: P.cushion, left: P.cushionSide, right: P.cushionSide });
-    if (DETAIL >= 1) puffyCushionTop(ctx, origin, gx, gy, floor + 5);
+    puffyCushionTop(ctx, origin, gx, gy, floor + 5);
   },
 
   vase(ctx, { gx, gy }, origin, floor) {
@@ -91,17 +90,15 @@ const ITEMS = {
     ctx.beginPath();
     ctx.ellipse(c.x, c.y - 9, 8, 9, 0, 0, Math.PI * 2);
     ctx.fill();
-    if (DETAIL >= 3) {
-      // Glaze: darker underneath, a bright highlight where the light hits.
-      const g = ctx.createRadialGradient(c.x + 3, c.y - 13, 1, c.x, c.y - 9, 10);
-      g.addColorStop(0, P.glazeShine);
-      g.addColorStop(0.35, P.clear);
-      g.addColorStop(1, P.cornerShade);
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.ellipse(c.x, c.y - 9, 8, 9, 0, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    // Glaze: darker underneath, a bright highlight where the light hits.
+    const g = ctx.createRadialGradient(c.x + 3, c.y - 13, 1, c.x, c.y - 9, 10);
+    g.addColorStop(0, P.glazeShine);
+    g.addColorStop(0.35, P.clear);
+    g.addColorStop(1, P.cornerShade);
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.ellipse(c.x, c.y - 9, 8, 9, 0, 0, Math.PI * 2);
+    ctx.fill();
 
     ctx.strokeStyle = P.woodDark;
     ctx.lineWidth = 1.5;
@@ -123,7 +120,7 @@ const ITEMS = {
     centredBox(ctx, origin, gx, gy, 0.3, floor, floor + 6, { top: P.woodDark, left: P.woodDark, right: P.wood });
     centredBox(ctx, origin, gx, gy, 0.28, floor + 6, floor + 42, paper);
     centredBox(ctx, origin, gx, gy, 0.32, floor + 42, floor + 45, { top: P.wood, left: P.woodDark, right: P.wood });
-    if (DETAIL >= 1) andonFrame(ctx, origin, gx, gy, floor);
+    andonFrame(ctx, origin, gx, gy, floor);
 
     // Wooden frame lines across the paper.
     ctx.strokeStyle = P.wood;
@@ -153,16 +150,14 @@ const ITEMS = {
     ctx.beginPath();
     ctx.arc(tip.x, tip.y - 3, 4, 0, Math.PI * 2);
     ctx.fill();
-    if (DETAIL >= 3) {
-      // Weathered granite: specks, and lichen where rain sits on the ledges.
-      const c = gridToScreen(gx + 0.5, gy + 0.5, origin, floor);
-      for (let i = 0; i < 40; i++) {
-        const lichen = i % 4 === 0;
-        const h = lichen ? [8, 30, 47][i % 3] : hash(gx, i, 3) * 52;
-        const half = h < 8 || (h > 42 && h < 47) ? 14 : h > 30 && h < 42 ? 9 : 6;
-        ctx.fillStyle = lichen ? P.lichen : P.stoneSpeck;
-        ctx.fillRect(c.x + (hash(gx, i, 4) - 0.5) * 2 * half, c.y - h - 1 + (lichen ? 0 : hash(gx, i, 5) * 2), lichen ? 2 : 1, 1);
-      }
+    // Weathered granite: specks, and lichen where rain sits on the ledges.
+    const c = gridToScreen(gx + 0.5, gy + 0.5, origin, floor);
+    for (let i = 0; i < 40; i++) {
+      const lichen = i % 4 === 0;
+      const h = lichen ? [8, 30, 47][i % 3] : hash(gx, i, 3) * 52;
+      const half = h < 8 || (h > 42 && h < 47) ? 14 : h > 30 && h < 42 ? 9 : 6;
+      ctx.fillStyle = lichen ? P.lichen : P.stoneSpeck;
+      ctx.fillRect(c.x + (hash(gx, i, 4) - 0.5) * 2 * half, c.y - h - 1 + (lichen ? 0 : hash(gx, i, 5) * 2), lichen ? 2 : 1, 1);
     }
   },
 
@@ -176,21 +171,19 @@ const ITEMS = {
     ctx.moveTo(foot.x, foot.y);
     ctx.quadraticCurveTo(foot.x - 6, foot.y - 40, foot.x + 4, foot.y - 70);
     ctx.stroke();
-    if (DETAIL >= 3) {
-      // Bark: a lit edge on the right and a few dark furrows.
-      ctx.strokeStyle = P.barkLight;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(foot.x + 3, foot.y - 2);
-      ctx.quadraticCurveTo(foot.x - 3, foot.y - 40, foot.x + 7, foot.y - 68);
-      ctx.stroke();
-      ctx.strokeStyle = P.woodGrain;
-      ctx.lineWidth = 0.8;
-      ctx.beginPath();
-      for (let k = 0; k < 6; k++) line(ctx, { x: foot.x - 2, y: foot.y - 8 - k * 9 }, { x: foot.x + 1, y: foot.y - 12 - k * 9 });
-      ctx.stroke();
-      ctx.strokeStyle = P.trunk;
-    }
+    // Bark: a lit edge on the right and a few dark furrows.
+    ctx.strokeStyle = P.barkLight;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(foot.x + 3, foot.y - 2);
+    ctx.quadraticCurveTo(foot.x - 3, foot.y - 40, foot.x + 7, foot.y - 68);
+    ctx.stroke();
+    ctx.strokeStyle = P.woodGrain;
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    for (let k = 0; k < 6; k++) line(ctx, { x: foot.x - 2, y: foot.y - 8 - k * 9 }, { x: foot.x + 1, y: foot.y - 12 - k * 9 });
+    ctx.stroke();
+    ctx.strokeStyle = P.trunk;
     ctx.lineWidth = 3;
     ctx.beginPath();
     line(ctx, { x: foot.x - 2, y: foot.y - 45 }, { x: foot.x - 26, y: foot.y - 70 });
@@ -208,16 +201,9 @@ const ITEMS = {
       [12, -96, 12, P.mapleLight],
     ];
     for (const [i, [dx, dy, r, color]] of blobs.entries()) {
-      if (DETAIL >= 3) {
-        leafyBlob(ctx, foot.x + dx, foot.y + dy, r, color, P.mapleLight, P.mapleShadow, 70 + i);
-        continue;
-      }
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.arc(foot.x + dx, foot.y + dy, r, 0, Math.PI * 2);
-      ctx.fill();
+      leafyBlob(ctx, foot.x + dx, foot.y + dy, r, color, P.mapleLight, P.mapleShadow, 70 + i);
     }
-    if (DETAIL >= 3) fallingLeaf(ctx, foot);
+    fallingLeaf(ctx, foot);
 
     // A few fallen leaves on the moss around the trunk.
     ctx.fillStyle = P.maple;
@@ -229,7 +215,7 @@ const ITEMS = {
 
 /** The dark frames around the stone lantern's light openings. */
 // ---------------------------------------------------------------------------
-// Extra detail (detail level 1 and up)
+// Finer detail: lacquer, tea set, cushion tops and the andon's frame
 
 /** Lacquer sheen, wood grain and a lit front edge on the table top at height h. */
 function lacquerTop(ctx, origin, x0, y0, x1, y1, h, alongX) {
