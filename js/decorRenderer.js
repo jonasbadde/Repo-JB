@@ -5,7 +5,7 @@
 // other three are hidden behind it, so we never draw them.
 import { gridToScreen } from './iso.js';
 import { tileAt } from './room.js';
-import { fillPolygon, line, hash } from './draw.js';
+import { fillPolygon, line, hash, leafyBlob } from './draw.js';
 import { PALETTE as P } from './palette.js';
 import { itemSize } from './decor.js';
 import { DETAIL } from './detail.js';
@@ -153,6 +153,17 @@ const ITEMS = {
     ctx.beginPath();
     ctx.arc(tip.x, tip.y - 3, 4, 0, Math.PI * 2);
     ctx.fill();
+    if (DETAIL >= 3) {
+      // Weathered granite: specks, and lichen where rain sits on the ledges.
+      const c = gridToScreen(gx + 0.5, gy + 0.5, origin, floor);
+      for (let i = 0; i < 40; i++) {
+        const lichen = i % 4 === 0;
+        const h = lichen ? [8, 30, 47][i % 3] : hash(gx, i, 3) * 52;
+        const half = h < 8 || (h > 42 && h < 47) ? 14 : h > 30 && h < 42 ? 9 : 6;
+        ctx.fillStyle = lichen ? P.lichen : P.stoneSpeck;
+        ctx.fillRect(c.x + (hash(gx, i, 4) - 0.5) * 2 * half, c.y - h - 1 + (lichen ? 0 : hash(gx, i, 5) * 2), lichen ? 2 : 1, 1);
+      }
+    }
   },
 
   maple(ctx, { gx, gy }, origin, floor) {
@@ -165,6 +176,21 @@ const ITEMS = {
     ctx.moveTo(foot.x, foot.y);
     ctx.quadraticCurveTo(foot.x - 6, foot.y - 40, foot.x + 4, foot.y - 70);
     ctx.stroke();
+    if (DETAIL >= 3) {
+      // Bark: a lit edge on the right and a few dark furrows.
+      ctx.strokeStyle = P.barkLight;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(foot.x + 3, foot.y - 2);
+      ctx.quadraticCurveTo(foot.x - 3, foot.y - 40, foot.x + 7, foot.y - 68);
+      ctx.stroke();
+      ctx.strokeStyle = P.woodGrain;
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      for (let k = 0; k < 6; k++) line(ctx, { x: foot.x - 2, y: foot.y - 8 - k * 9 }, { x: foot.x + 1, y: foot.y - 12 - k * 9 });
+      ctx.stroke();
+      ctx.strokeStyle = P.trunk;
+    }
     ctx.lineWidth = 3;
     ctx.beginPath();
     line(ctx, { x: foot.x - 2, y: foot.y - 45 }, { x: foot.x - 26, y: foot.y - 70 });
@@ -181,12 +207,17 @@ const ITEMS = {
       [-4, -112, 16, P.mapleLight],
       [12, -96, 12, P.mapleLight],
     ];
-    for (const [dx, dy, r, color] of blobs) {
+    for (const [i, [dx, dy, r, color]] of blobs.entries()) {
+      if (DETAIL >= 3) {
+        leafyBlob(ctx, foot.x + dx, foot.y + dy, r, color, P.mapleLight, P.mapleShadow, 70 + i);
+        continue;
+      }
       ctx.fillStyle = color;
       ctx.beginPath();
       ctx.arc(foot.x + dx, foot.y + dy, r, 0, Math.PI * 2);
       ctx.fill();
     }
+    if (DETAIL >= 3) fallingLeaf(ctx, foot);
 
     // A few fallen leaves on the moss around the trunk.
     ctx.fillStyle = P.maple;
@@ -249,6 +280,26 @@ function teaSet(ctx, c) {
     ctx.ellipse(c.x + dx, c.y + dy - 4, 1.8, 0.8, 0, 0, Math.PI * 2);
     ctx.fill();
   }
+}
+
+/**
+ * Now and then a leaf lets go of the maple and see-saws down to the moss.
+ * One leaf at a time, on a 7-second loop: 4 s falling, then a pause.
+ */
+function fallingLeaf(ctx, foot) {
+  const t = (performance.now() / 7000) % 1;
+  const fall = t / 0.57;
+  if (fall > 1) return;
+  const x = foot.x + 10 + Math.sin(fall * 9) * 10 - fall * 18;
+  const y = foot.y - 80 + fall * 82;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(Math.sin(fall * 9) * 0.9);
+  ctx.fillStyle = P.mapleLight;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 2.8, 1.6, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
 }
 
 /** Two thin wisps of steam curling up from the teapot's spout. */

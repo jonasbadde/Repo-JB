@@ -2,7 +2,7 @@
 // the tile in front of it, the visible side faces underneath.
 import { TILE_W, gridToScreen, tileCorners } from './iso.js';
 import { tileAt } from './room.js';
-import { fillPolygon, strokePolygon, lerp, line, hash, woodGrain } from './draw.js';
+import { fillPolygon, strokePolygon, polygonPath, lerp, line, hash, woodGrain } from './draw.js';
 import { PALETTE as P } from './palette.js';
 import { DETAIL } from './detail.js';
 
@@ -169,6 +169,13 @@ const TOPS = {
     const [top, , bottom] = corners;
     const c = lerp(top, bottom, 0.5);
     const r = TILE_W * (0.26 + hash(tile.gx, tile.gy, 3) * 0.06);
+    if (DETAIL >= 3) {
+      // The stone sits slightly sunk in the moss, which darkens around it.
+      ctx.fillStyle = P.contactShadow;
+      ctx.beginPath();
+      ctx.ellipse(c.x - 1, c.y + 3, r + 3, r / 2 + 2, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
     ctx.fillStyle = P.steppingStone;
     ctx.beginPath();
     ctx.ellipse(c.x, c.y + 2, r, r / 2, 0, 0, Math.PI * 2);
@@ -177,6 +184,25 @@ const TOPS = {
     ctx.beginPath();
     ctx.ellipse(c.x, c.y - 1, r, r / 2, 0, 0, Math.PI * 2);
     ctx.fill();
+    if (DETAIL >= 3) {
+      // A lit rim on the upper right, specks, and a small chip out of the edge.
+      ctx.strokeStyle = P.stoneBevelLight;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.ellipse(c.x, c.y - 1, r - 1.5, r / 2 - 1, 0, -Math.PI * 0.85, -Math.PI * 0.1);
+      ctx.stroke();
+      ctx.fillStyle = P.stoneSpeck;
+      for (let i = 0; i < 9; i++) {
+        const a = hash(tile.gx, tile.gy, 20 + i) * Math.PI * 2;
+        const d = Math.sqrt(hash(tile.gx, tile.gy, 30 + i)) * 0.85;
+        ctx.fillRect(c.x + Math.cos(a) * r * d, c.y - 1 + Math.sin(a) * (r / 2) * d, 1, 1);
+      }
+      const chip = hash(tile.gx, tile.gy, 40) * Math.PI;
+      ctx.fillStyle = P.steppingStone;
+      ctx.beginPath();
+      ctx.ellipse(c.x + Math.cos(chip) * r * 0.92, c.y - 1 + Math.sin(chip) * r * 0.46, 3, 1.6, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
   },
 
   water(ctx, tile, corners, origin, room, time) {
@@ -187,6 +213,7 @@ const TOPS = {
     g.addColorStop(0, P.waterDeep);
     g.addColorStop(1, P.water);
     fillPolygon(ctx, corners, g);
+    if (DETAIL >= 3) drawPondLife(ctx, tile, corners, origin, time);
 
     // Glints that slowly drift, so the pond looks alive.
     ctx.strokeStyle = P.waterShine;
@@ -386,9 +413,79 @@ function drawSandals(ctx, c) {
   }
 }
 
+// Koi swim slow loops around the middle of the pond (grid coordinates).
+const POND = { x: 2.5, y: 10, rx: 0.95, ry: 0.5 };
+const KOI = [
+  { speed: 1 / 9000, offset: 0, white: 0.45 },
+  { speed: -1 / 12000, offset: 2.4, white: 0.75 },
+];
+
+/**
+ * What makes the pond look alive at level 3: koi under the surface, the
+ * sky's reflection, and rings spreading where something touched the water.
+ * Drawn per water tile, clipped to it, so the pieces join up seamlessly.
+ */
+function drawPondLife(ctx, tile, corners, origin, time) {
+  ctx.save();
+  polygonPath(ctx, corners);
+  ctx.clip();
+  for (const koi of KOI) {
+    const a = time * koi.speed * Math.PI * 2 + koi.offset;
+    const ry = POND.ry * (0.8 + 0.2 * Math.sin(a * 2));
+    const p = gridToScreen(POND.x + Math.cos(a) * POND.rx, POND.y + Math.sin(a) * ry, origin, -3);
+    // Which way it swims on screen, so the body points that way.
+    const dir = Math.sign(koi.speed);
+    const vx = -Math.sin(a) * POND.rx * dir;
+    const vy = Math.cos(a) * ry * dir;
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(Math.atan2((vx + vy) * 16, (vx - vy) * 32));
+    ctx.globalAlpha = 0.75; // seen through the water
+    ctx.fillStyle = P.koi;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 6, 2.2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(-5, 0);
+    ctx.lineTo(-10, -2.5 + Math.sin(time / 200) * 0.8);
+    ctx.lineTo(-10, 2.5 + Math.sin(time / 200) * 0.8);
+    ctx.fill();
+    ctx.fillStyle = P.koiWhite;
+    ctx.beginPath();
+    ctx.ellipse(6 * koi.white - 2, 0, 1.8, 1.4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+  // The sky reflected as a pale band across the water.
+  const [top, right, bottom, left] = corners;
+  ctx.globalAlpha = 0.6;
+  fillPolygon(ctx, [lerp(top, left, 0.15), lerp(top, left, 0.35), lerp(right, bottom, 0.35), lerp(right, bottom, 0.15)], P.waterSky);
+  // A ring spreading out and fading, then starting again somewhere else.
+  const phase = (time / 3200 + hash(tile.gx, tile.gy, 7)) % 1;
+  const cycle = Math.floor(time / 3200 + hash(tile.gx, tile.gy, 7));
+  const at = lerp(lerp(top, right, 0.3 + hash(tile.gx, cycle, 8) * 0.4), lerp(left, bottom, 0.3 + hash(tile.gx, cycle, 8) * 0.4), 0.3 + hash(tile.gy, cycle, 9) * 0.4);
+  ctx.globalAlpha = (1 - phase) * 0.6;
+  ctx.strokeStyle = P.waterShine;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.ellipse(at.x, at.y, 2 + phase * 12, 1 + phase * 6, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+}
+
 function drawMoss(ctx, { gx, gy }, corners, room) {
   fillPolygon(ctx, corners, hash(gx, gy, 1) > 0.5 ? P.moss : P.mossAlt);
   const [top, right, bottom, left] = corners;
+  if (DETAIL >= 3) {
+    // Mottled moss: a few soft darker clumps and sunlit patches.
+    for (let i = 0; i < 4; i++) {
+      const p = lerp(lerp(top, right, 0.2 + hash(gx, gy, 50 + i) * 0.6), lerp(left, bottom, 0.2 + hash(gx, gy, 50 + i) * 0.6), 0.2 + hash(gx, gy, 60 + i) * 0.6);
+      ctx.fillStyle = i % 2 ? P.mossLight : P.mossDeep;
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y, 10 + hash(gx, gy, 70 + i) * 8, 4.5 + hash(gx, gy, 80 + i) * 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
 
   // Shadow at the foot of the house: if the tile behind is raised, darken
   // a strip along the shared edge. It grounds the building visually.

@@ -34,8 +34,12 @@ const SUN_SLANT = 0.9; // the sun is to the right, so the patch slides towards +
 /** Add the ambience pieces to the renderer's draw list. dusk: 0 = day, 1 = dusk. */
 export function addAmbience(list, ctx, room, origin, dusk) {
   for (const item of room.items) {
+    if (item.type === 'maple') {
+      addTreeShadow(list, ctx, room, origin, item, dusk);
+      continue;
+    }
     const { w, d } = itemSize(item);
-    const m = item.type === 'paperLantern' ? 0.28 : item.type === 'cushion' ? 0.16 : 0.1;
+    const m = { paperLantern: 0.28, cushion: 0.16, stoneLantern: 0.22, vase: 0.3 }[item.type] ?? 0.1;
     const shape = [[item.gx + m, item.gy + m], [item.gx + w - m, item.gy + m], [item.gx + w - m, item.gy + d - m], [item.gx + m, item.gy + d - m]];
     for (const t of itemTiles(item)) addClipped(list, ctx, room, origin, t, (floor) => softShadow(ctx, origin, shape, floor));
     if (DETAIL >= 3 && HEIGHT[item.type] && dusk < 1) addCastShadow(list, ctx, room, origin, item, shape, dusk);
@@ -84,6 +88,31 @@ function addCastShadow(list, ctx, room, origin, item, shape, dusk) {
       addClipped(list, ctx, room, origin, tile, (floor) => {
         ctx.globalAlpha = 0.45 * (1 - dusk);
         softShadow(ctx, origin, outline, floor, 0.5);
+        ctx.globalAlpha = 1;
+      });
+    }
+  }
+}
+
+/**
+ * A tree's shadow is its crown's: a big soft round patch on the ground,
+ * pushed away from the light. Only in daylight; at dusk just the trunk's foot.
+ */
+function addTreeShadow(list, ctx, room, origin, tree, dusk) {
+  const cx = tree.gx + 0.5 + SHADOW_DIR[0] * 0.9;
+  const cy = tree.gy + 0.5 + SHADOW_DIR[1] * 0.9;
+  const crown = [];
+  for (let k = 0; k < 12; k++) {
+    const a = (k / 12) * Math.PI * 2;
+    crown.push([cx + Math.cos(a) * 0.9, cy + Math.sin(a) * 0.9]);
+  }
+  for (let gy = Math.floor(cy - 1); gy <= Math.floor(cy + 1); gy++) {
+    for (let gx = Math.floor(cx - 1); gx <= Math.floor(cx + 1); gx++) {
+      const tile = tileAt(room, gx, gy);
+      if (!tile || tile.height !== 0) continue;
+      addClipped(list, ctx, room, origin, tile, (floor) => {
+        ctx.globalAlpha = 0.5 * (1 - dusk) + 0.15;
+        softShadow(ctx, origin, crown, floor, 0.45);
         ctx.globalAlpha = 1;
       });
     }

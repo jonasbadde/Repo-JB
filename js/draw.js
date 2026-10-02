@@ -67,3 +67,27 @@ export function woodGrain(ctx, a0, a1, b0, b1, count, seed, color) {
   }
   ctx.stroke();
 }
+
+/**
+ * A clump of foliage: a round blob covered in small leaf dabs, lighter on
+ * the upper right where the light comes from and darker underneath.
+ */
+export function leafyBlob(ctx, x, y, r, base, light, dark, seed) {
+  ctx.fillStyle = base;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
+  const dabs = Math.round(r * 1.6);
+  for (let i = 0; i < dabs; i++) {
+    const a = hash(seed, i, 1) * Math.PI * 2;
+    const d = Math.sqrt(hash(seed, i, 2)) * r * 0.95;
+    const px = x + Math.cos(a) * d;
+    const py = y + Math.sin(a) * d;
+    // Upper-right dabs are lit, lower-left ones in shade.
+    const lit = (Math.cos(a) - Math.sin(a)) * (d / r);
+    ctx.fillStyle = lit > 0.35 ? light : lit < -0.95 ? dark : base;
+    ctx.beginPath();
+    ctx.ellipse(px, py, 2.6, 1.8, a, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}

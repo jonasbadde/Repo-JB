@@ -106,6 +106,15 @@ export const PALETTE = {
   maple: '#c8553d',
   mapleLight: '#e07a4f',
   mapleDark: '#9e3b2e',
+  mapleShadow: '#933a2c',
+  barkLight: 'rgba(160, 125, 100, 0.6)',
+  lichen: 'rgba(150, 165, 95, 0.75)',
+  koi: '#e8793f',
+  koiWhite: '#f6efe4',
+  waterSky: 'rgba(200, 230, 245, 0.35)', // the sky reflected on the pond
+  mossLight: 'rgba(190, 215, 140, 0.16)',
+  mossDeep: 'rgba(55, 85, 40, 0.13)',
+  treeShadow: '#46694a',
 
   // Roof.
   roofTile: '#5d6470', // grey-blue fired clay (kawara)
