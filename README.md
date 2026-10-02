@@ -9,11 +9,22 @@ Play it at https://jonasbadde.github.io/Repo-JB/
 
 | Standing in the genkan | Walking out to the garden | Sitting at dusk |
 |---|---|---|
-| ![Avatar standing](docs/screenshots/standing.png) | ![Avatar walking](docs/screenshots/walking.png) | ![Avatar sitting at dusk](docs/screenshots/sitting-dusk.png) |
+| ![Avatar standing](docs/screenshots/standing.jpg) | ![Avatar walking](docs/screenshots/walking.jpg) | ![Avatar sitting at dusk](docs/screenshots/sitting-dusk.jpg) |
 
 | Furniture menu | Moving: doesn't fit | Moving: fits (turned with R) | Picked up into the tray |
 |---|---|---|---|
-| ![Menu over the table](docs/screenshots/furniture-menu.png) | ![Red footprint over the cushions](docs/screenshots/furniture-blocked.png) | ![Green footprint, table turned](docs/screenshots/furniture-moving.png) | ![Tray at dusk](docs/screenshots/furniture-tray-dusk.png) |
+| ![Menu over the table](docs/screenshots/furniture-menu.jpg) | ![Red footprint over the cushions](docs/screenshots/furniture-blocked.jpg) | ![Green footprint, table turned](docs/screenshots/furniture-moving.jpg) | ![Tray at dusk](docs/screenshots/furniture-tray-dusk.jpg) |
+
+## Art style
+
+Soft Ghibli colours with painted-background detail: two-tile tatami mats
+with cloth borders, wood grain and knots, washi paper, glazed roof tiles,
+cast shadows that follow the daylight, a sunbeam with drifting dust,
+steam from the teapot, koi in the pond, a maple that drops a leaf now and
+then, and a fine paper grain over everything. All of it is still drawn in
+code from the palette, with no image files.
+
+![Before and after the detail pass, by day, at dusk and up close](docs/screenshots/art-before-after.jpg)
 
 ## Controls
 
@@ -89,9 +100,11 @@ layout is saved in the browser, so it is still there after a reload;
 | `js/decorRenderer.js` | Furniture and garden objects |
 | `js/ground.js` | Grass plot, trees and bamboo fence around the house |
 | `js/lighting.js` | Dusk tint and lantern glow |
+| `js/ambience.js` | Contact and cast shadows, wall shading, sun patches and beams with dust, paper grain |
+| `js/spriteCache.js` | Draws the never-changing backdrop (ground, back walls, roof) once and reuses it |
 | `js/scenery.js` | Sky backdrop and the pagoda view through the window |
 | `js/palette.js` | Colours for the art style |
-| `js/draw.js` | Small shared canvas helpers |
+| `js/draw.js` | Small shared canvas helpers (also wood grain and leafy foliage) |
 
 ## Roadmap
 

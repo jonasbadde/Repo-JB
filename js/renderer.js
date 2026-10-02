@@ -8,11 +8,13 @@
 import { tileCorners, gridToScreen } from './iso.js';
 import { tilesInDrawOrder, tileAt } from './room.js';
 import { drawTile } from './floorRenderer.js';
-import { drawBackWalls, drawLowWall, drawEavePost } from './wallRenderer.js';
-import { drawGround, frontFences } from './ground.js';
+import { drawBackWalls, drawLowWall, drawEavePost, ROOF_DEPTH, ROOF_RISE } from './wallRenderer.js';
+import { drawGround, frontFences, MARGIN, SOIL } from './ground.js';
+import { drawCached, boxAround } from './spriteCache.js';
 import { drawItem, drawItemAt } from './decorRenderer.js';
 import { drawAvatar, drawPathDot } from './avatarRenderer.js';
 import { avatarDepth } from './avatar.js';
+import { addAmbience, drawLightBeams } from './ambience.js';
 import { itemTiles, FACING } from './decor.js';
 import { fillPolygon, strokePolygon } from './draw.js';
 import { PALETTE as P } from './palette.js';
@@ -27,12 +29,17 @@ const ORDER = { tile: 0, highlight: 0.1, object: 0.6, avatar: 0.7, wall: 0.8 };
  * Extra things to draw: `selected` is the furniture whose menu is open,
  * `ghost` = { item, gx, gy, rot, ok } is furniture being moved.
  */
-export function drawScene(ctx, room, origin, { hovered, time, avatar, dots = [], selected = null, ghost = null }) {
-  // Things that are behind everything else don't need sorting.
-  drawGround(ctx, room, origin);
-  drawBackWalls(ctx, room, origin);
+export function drawScene(ctx, room, origin, { hovered, time, avatar, dots = [], selected = null, ghost = null, dusk = 0 }) {
+  // Things that are behind everything else don't need sorting. They never
+  // change either, so they are drawn once and reused (see spriteCache.js).
+  drawCached(ctx, 'backdrop', backdropBox(room), (g, o) => {
+    drawGround(g, room, o);
+    drawBackWalls(g, room, o);
+  }, origin);
 
   const list = [];
+  // Floor tiles and low walls are drawn fresh: caching them as many small
+  // pictures too was measured to be slower on high-DPI screens.
   for (const tile of tilesInDrawOrder(room)) {
     list.push({ depth: tile.gx + tile.gy + ORDER.tile, draw: () => drawTile(ctx, room, tile, origin, time) });
   }
@@ -46,9 +53,10 @@ export function drawScene(ctx, room, origin, { hovered, time, avatar, dots = [],
     const front = Math.max(...itemTiles(item).map((t) => t.gx + t.gy));
     list.push({ depth: front + ORDER.object, draw: () => drawItem(ctx, room, item, origin) });
   }
+  addAmbience(list, ctx, room, origin, dusk);
   for (const fence of frontFences(room, origin)) list.push({ depth: fence.depth, draw: () => fence.draw(ctx) });
   list.push({ depth: 7 + ORDER.wall + 0.1, draw: () => drawEavePost(ctx, room, origin) });
-  list.push({ depth: avatarDepth(avatar) + ORDER.avatar, draw: () => drawAvatar(ctx, avatar, origin) });
+  list.push({ depth: avatarDepth(avatar) + ORDER.avatar, draw: () => drawAvatar(ctx, avatar, origin, dusk) });
   // Path dots lie on the floor, so furniture and walls in front hide them.
   for (const { tile, alpha } of dots) {
     list.push({ depth: tile.gx + tile.gy + ORDER.highlight, draw: () => drawPathDot(ctx, tile, origin, alpha) });
@@ -70,6 +78,23 @@ export function drawScene(ctx, room, origin, { hovered, time, avatar, dots = [],
   // sort() keeps equal depths in the order they were added.
   list.sort((a, b) => a.depth - b.depth);
   for (const item of list) item.draw();
+  drawLightBeams(ctx, room, origin, dusk, time);
+}
+
+const ZERO = { x: 0, y: 0 };
+
+/** Everything the ground, back trees, back walls and roof can cover. */
+function backdropBox(room) {
+  const m = MARGIN + 1;
+  return boxAround(
+    [
+      gridToScreen(-m, room.depth + m, ZERO),
+      gridToScreen(room.width + m, -m, ZERO),
+      gridToScreen(-ROOF_DEPTH - m, -ROOF_DEPTH - m, ZERO, room.wallTop + ROOF_RISE + 200),
+      gridToScreen(room.width + m, room.depth + m, ZERO, -SOIL),
+    ],
+    40,
+  );
 }
 
 /** gx + gy of an item's front-most tile. */

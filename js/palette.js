@@ -18,15 +18,24 @@ export const PALETTE = {
   tatamiAlt: '#c4b972',
   tatamiWeave: 'rgba(110, 100, 40, 0.18)',
   tatamiEdge: '#3f5a3a', // the green cloth border ("heri")
+  tatamiLight: '#dcd291', // sunny side of a mat
+  heriPattern: 'rgba(225, 215, 160, 0.35)', // woven pattern on the heri
+  tatamiWorn: 'rgba(255, 250, 220, 0.12)', // paler patches where people walk
 
   shoji: '#f6efdc',
   shojiShade: '#e9dfc6', // left wall is a little darker (light comes from the right)
+  paperFibre: 'rgba(150, 125, 85, 0.13)', // fibres in washi paper
+  latticeLight: 'rgba(255, 244, 220, 0.6)', // lit edge of a lattice strip
+  clear: 'rgba(255, 244, 220, 0)', // fully see-through, for the ends of gradients
   plaster: '#d9c39a',
   wood: '#6b4430',
   woodDark: '#3b2418',
   woodLight: '#9a6a48',
   floorSlab: '#5a3a28',
   plasterShade: '#cdb68c', // inside the tokonoma alcove
+  plasterSpeck: 'rgba(120, 95, 60, 0.25)',
+  goldFleck: 'rgba(235, 200, 110, 0.75)', // gold leaf on the fusuma
+  glazeShine: 'rgba(255, 250, 235, 0.75)',
 
   // Sliding fusuma doors: thick paper with an ink-and-gold mountain painting.
   fusuma: '#efe4c8',
@@ -45,6 +54,11 @@ export const PALETTE = {
   planks: '#a8774f',
   planksAlt: '#9c6d47',
   plankGap: 'rgba(50, 30, 20, 0.45)',
+  knot: 'rgba(60, 35, 20, 0.55)',
+  nail: 'rgba(40, 35, 35, 0.7)',
+  stoneBevelLight: 'rgba(255, 252, 240, 0.35)',
+  stoneSpeck: 'rgba(80, 70, 60, 0.35)',
+  straw: '#d8c58e', // straw sandals
 
   // Garden and surroundings.
   moss: '#86a868',
@@ -74,6 +88,11 @@ export const PALETTE = {
 
   // Furniture and garden objects.
   lacquer: '#4a2a1f', // low table top
+  lacquerShine: 'rgba(255, 228, 200, 0.22)', // reflection on the lacquer
+  woodGrain: 'rgba(30, 15, 8, 0.22)',
+  cushionLight: '#a65e6e', // the puffed-up middle of a cushion
+  cushionSeam: 'rgba(55, 18, 28, 0.45)',
+  thread: '#e8d9b0', // the tie in the middle of a zabuton
   cushion: '#8e4b5a',
   cushionSide: '#6e3846',
   vase: '#3e5c6b',
@@ -87,11 +106,22 @@ export const PALETTE = {
   maple: '#c8553d',
   mapleLight: '#e07a4f',
   mapleDark: '#9e3b2e',
+  mapleShadow: '#933a2c',
+  barkLight: 'rgba(160, 125, 100, 0.6)',
+  lichen: 'rgba(150, 165, 95, 0.75)',
+  koi: '#e8793f',
+  koiWhite: '#f6efe4',
+  waterSky: 'rgba(200, 230, 245, 0.35)', // the sky reflected on the pond
+  mossLight: 'rgba(190, 215, 140, 0.16)',
+  mossDeep: 'rgba(55, 85, 40, 0.13)',
+  treeShadow: '#46694a',
 
   // Roof.
   roofTile: '#5d6470', // grey-blue fired clay (kawara)
   roofTileDark: '#454b55',
   roofRidge: '#3a3f48',
+  roofTileLight: 'rgba(170, 182, 200, 0.55)', // glaze catching the sky
+  roofCourseShadow: 'rgba(25, 28, 35, 0.25)',
 
   duskTop: '#f0a46b',
   duskBottom: '#fbe3a8',
@@ -102,6 +132,9 @@ export const PALETTE = {
   // The avatar: an indigo yukata with a moss-green obi, wooden geta.
   yukata: '#3b4a7a',
   yukataShade: '#2b365e',
+  yukataLight: 'rgba(140, 155, 210, 0.7)', // the robe's edge catching the light
+  obiStripe: 'rgba(225, 235, 190, 0.6)',
+  hairSheen: 'rgba(150, 130, 120, 0.7)',
   yukataPattern: 'rgba(244, 236, 216, 0.6)', // hemp-leaf (asanoha) marks
   collar: '#f4ecd8',
   obiKnot: '#5f8048',
@@ -112,6 +145,20 @@ export const PALETTE = {
   hairTie: '#d9b866',
   eye: '#2f2a26',
   pathDot: '#fff3c4', // the planned walk, shown briefly on the floor
+
+  // Light and small life.
+  contactShadow: 'rgba(40, 25, 15, 0.35)', // soft shadow right under furniture
+  cornerShade: 'rgba(40, 25, 15, 0.22)', // where floor meets wall
+  sunPatch: 'rgba(255, 238, 190, 0.32)', // daylight through the shoji
+  sunBeam: 'rgba(255, 236, 190, 0.16)', // daylight hanging in the air
+  dust: 'rgba(255, 246, 220, 0.8)',
+  steam: 'rgba(255, 255, 250, 0.35)',
+  grainLight: '#fff8e6',
+  grainDark: '#3b2418',
+  teapot: '#5b4636',
+  teapotShine: 'rgba(255, 230, 200, 0.35)',
+  teacup: '#efe6d2',
+  tea: '#8c8a3c',
 
   // Moving furniture: the footprint shows where it can (or can't) go.
   placeOk: 'rgba(150, 205, 120, 0.45)',

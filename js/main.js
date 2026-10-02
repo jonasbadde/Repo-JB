@@ -8,6 +8,7 @@ import { ROOF_DEPTH, ROOF_RISE } from './wallRenderer.js';
 import { MARGIN, SOIL } from './ground.js';
 import { lightPosition } from './decorRenderer.js';
 import { drawLighting } from './lighting.js';
+import { drawGrain } from './ambience.js';
 import { createAvatar, walkTo, updateAvatar } from './avatar.js';
 import { createFurnitureEditor } from './furnitureUI.js';
 import { loadLayout } from './furniture.js';
@@ -172,12 +173,14 @@ function frame(time) {
     dots: pathDots(time),
     selected: editor.edit.selected,
     ghost: editor.edit.ghost,
+    dusk: state.dusk,
   });
   const lights = room.items.filter((item) => item.glow).map((item) => ({
     ...lightPosition(room, item, state.origin),
     glow: item.glow,
   }));
   drawLighting(ctx, w, h, lights, state.dusk, time);
+  drawGrain(ctx, w, h);
 
   const t = state.hovered;
   hud.textContent =
