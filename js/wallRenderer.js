@@ -341,6 +341,7 @@ function drawRoof(ctx, room, origin, rightEnd) {
     const [i0, i1] = inner;
     const [o0, o1] = outer;
     fillPolygon(ctx, [i0, i1, o1, o0], shade);
+    if (DETAIL >= 3) roofTiles(ctx, i0, i1, o0, o1);
 
     // Rows of tiles: lines running along the roof at even steps up the slope.
     ctx.strokeStyle = P.roofRidge;
@@ -365,6 +366,42 @@ function drawRoof(ctx, room, origin, rightEnd) {
     // Gable end: a small triangle that gives the roof some thickness.
     fillPolygon(ctx, [i1, o1, { x: o1.x, y: o1.y + ROOF_RISE }], P.roofRidge);
   }
+}
+
+/**
+ * Glazed clay tiles (kawara) on one roof half. The eave runs i0-i1 and the
+ * ridge o0-o1. Ribs of round cover tiles run down the slope, each with a
+ * lit and a shaded edge; every course casts a thin shadow on the one
+ * below; and a row of round tile ends finishes the eave.
+ */
+function roofTiles(ctx, i0, i1, o0, o1) {
+  const along = (t, s) => lerpPt(lerpPt(i0, o0, t), lerpPt(i1, o1, t), s); // t up the slope, s along the eave
+  const ribs = Math.round(Math.hypot(i1.x - i0.x, i1.y - i0.y) / 9);
+  for (let t = 0.2; t < 1; t += 0.2) {
+    fillPolygon(ctx, [along(t, 0), along(t, 1), along(t - 0.05, 1), along(t - 0.05, 0)], P.roofCourseShadow);
+  }
+  ctx.lineWidth = 1;
+  for (const [offset, color] of [[0, P.roofTileLight], [0.004, P.roofRidge]]) {
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    for (let r = 1; r < ribs; r++) line(ctx, along(0, r / ribs + offset), along(1, r / ribs + offset));
+    ctx.stroke();
+  }
+  for (let r = 0; r < ribs; r++) {
+    const p = along(0.015, (r + 0.5) / ribs);
+    ctx.fillStyle = P.roofRidge;
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y + 1, 3, 2.6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = P.roofTileLight;
+    ctx.beginPath();
+    ctx.ellipse(p.x - 0.4, p.y + 0.6, 1.8, 1.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function lerpPt(a, b, t) {
+  return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
 }
 
 /**
@@ -397,6 +434,23 @@ export function drawLowWall(ctx, room, wall, origin) {
   const lit = axis === 'x'; // walls facing +gx catch the light
   fillPolygon(ctx, [pt(p0, base), pt(p1, base), pt(p1, base + LOW_WALL), pt(p0, base + LOW_WALL)], entrance ? P.woodLight : lit ? P.shoji : P.shojiShade);
   fillPolygon(ctx, [pt(p0, base), pt(p1, base), pt(p1, base + 8), pt(p0, base + 8)], P.wood);
+  if (DETAIL >= 3) {
+    if (entrance) {
+      woodGrain(ctx, pt(p0, base + 8), pt(p0, base + LOW_WALL), pt(p1, base + 8), pt(p1, base + LOW_WALL), 4, gx * 13 + gy, P.woodGrain);
+    } else {
+      // The lower part of a shoji: paper between thin vertical strips.
+      ctx.strokeStyle = P.wood;
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      for (const t of [0.25, 0.5, 0.75]) {
+        const q = { x: pt(p0, 0).x + (pt(p1, 0).x - pt(p0, 0).x) * t, y: 0 };
+        const lo = gridToScreen(p0[0] + (p1[0] - p0[0]) * t, p0[1] + (p1[1] - p0[1]) * t, origin, base + 8);
+        line(ctx, lo, { x: q.x, y: lo.y - (LOW_WALL - 8) });
+      }
+      ctx.stroke();
+    }
+    woodGrain(ctx, pt(p0, base), pt(p0, base + 8), pt(p1, base), pt(p1, base + 8), 2, gx * 17 + gy * 3, P.woodGrain);
+  }
 
   // The cut top of the wall and a post at each end.
   ctx.strokeStyle = P.woodDark;

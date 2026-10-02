@@ -111,6 +111,8 @@ export const PALETTE = {
   roofTile: '#5d6470', // grey-blue fired clay (kawara)
   roofTileDark: '#454b55',
   roofRidge: '#3a3f48',
+  roofTileLight: 'rgba(170, 182, 200, 0.55)', // glaze catching the sky
+  roofCourseShadow: 'rgba(25, 28, 35, 0.25)',
 
   duskTop: '#f0a46b',
   duskBottom: '#fbe3a8',

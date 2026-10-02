@@ -48,6 +48,21 @@ function drawSides(ctx, room, tile, origin) {
     } else {
       // Stone footing under the house, with a wooden sill beam on top.
       fillPolygon(ctx, face, lit ? P.foundation : P.foundationDark);
+      if (DETAIL >= 3) {
+        // Cut blocks in two courses, with specks and a darker foot.
+        ctx.strokeStyle = P.stoneJoint;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        const midH = 6 + (drop - 6) / 2;
+        line(ctx, { x: a.x, y: a.y + midH }, { x: b.x, y: b.y + midH });
+        const off = lerp(a, b, 0.25 + hash(gx, gy, 9) * 0.2);
+        line(ctx, { x: off.x, y: off.y + midH }, { x: off.x, y: off.y + drop });
+        ctx.stroke();
+        const g = ctx.createLinearGradient(0, b.y + drop - 8, 0, b.y + drop);
+        g.addColorStop(0, P.clear);
+        g.addColorStop(1, P.cornerShade);
+        fillPolygon(ctx, face, g);
+      }
       ctx.strokeStyle = P.stoneJoint;
       ctx.lineWidth = 1;
       ctx.beginPath();
