@@ -132,6 +132,9 @@ export const PALETTE = {
   // The avatar: an indigo yukata with a moss-green obi, wooden geta.
   yukata: '#3b4a7a',
   yukataShade: '#2b365e',
+  yukataLight: 'rgba(140, 155, 210, 0.7)', // the robe's edge catching the light
+  obiStripe: 'rgba(225, 235, 190, 0.6)',
+  hairSheen: 'rgba(150, 130, 120, 0.7)',
   yukataPattern: 'rgba(244, 236, 216, 0.6)', // hemp-leaf (asanoha) marks
   collar: '#f4ecd8',
   obiKnot: '#5f8048',

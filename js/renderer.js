@@ -51,7 +51,7 @@ export function drawScene(ctx, room, origin, { hovered, time, avatar, dots = [],
   if (DETAIL >= 2) addAmbience(list, ctx, room, origin, dusk);
   for (const fence of frontFences(room, origin)) list.push({ depth: fence.depth, draw: () => fence.draw(ctx) });
   list.push({ depth: 7 + ORDER.wall + 0.1, draw: () => drawEavePost(ctx, room, origin) });
-  list.push({ depth: avatarDepth(avatar) + ORDER.avatar, draw: () => drawAvatar(ctx, avatar, origin) });
+  list.push({ depth: avatarDepth(avatar) + ORDER.avatar, draw: () => drawAvatar(ctx, avatar, origin, dusk) });
   // Path dots lie on the floor, so furniture and walls in front hide them.
   for (const { tile, alpha } of dots) {
     list.push({ depth: tile.gx + tile.gy + ORDER.highlight, draw: () => drawPathDot(ctx, tile, origin, alpha) });
