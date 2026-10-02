@@ -2,7 +2,7 @@
 // the tile in front of it, the visible side faces underneath.
 import { TILE_W, gridToScreen, tileCorners } from './iso.js';
 import { tileAt } from './room.js';
-import { fillPolygon, strokePolygon, lerp, line, hash } from './draw.js';
+import { fillPolygon, strokePolygon, lerp, line, hash, woodGrain } from './draw.js';
 import { PALETTE as P } from './palette.js';
 import { DETAIL } from './detail.js';
 
@@ -95,6 +95,12 @@ const TOPS = {
     // The alcove floor is one polished board, a step above the tatami.
     fillPolygon(ctx, corners, P.woodLight);
     const [top, right, bottom, left] = corners;
+    if (DETAIL >= 3) {
+      woodGrain(ctx, top, left, right, bottom, 7, tile.gx + 50, P.woodGrain);
+      // A soft reflection on the polished wood.
+      fillPolygon(ctx, [lerp(top, right, 0.3), lerp(top, right, 0.5), lerp(left, bottom, 0.4), lerp(left, bottom, 0.2)], P.lacquerShine);
+      return;
+    }
     ctx.strokeStyle = P.wood;
     ctx.lineWidth = 1;
     ctx.beginPath();

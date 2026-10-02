@@ -8,7 +8,7 @@ import { TILE_W, TILE_H, gridToScreen } from './iso.js';
 import { tileAt } from './room.js';
 import { WALL_PANELS } from './decor.js';
 import { drawWindowView } from './scenery.js';
-import { fillPolygon, line, hash } from './draw.js';
+import { fillPolygon, line, hash, woodGrain } from './draw.js';
 import { PALETTE as P } from './palette.js';
 import { DETAIL } from './detail.js';
 
@@ -45,6 +45,29 @@ function wallQuad(ctx, side, origin, u0, u1, h0, h1, color) {
     ],
     color,
   );
+}
+
+/** Wood grain over the wall-space rectangle; alongU = boards lying horizontally. */
+function wallGrain(ctx, side, origin, u0, u1, h0, h1, alongU, count) {
+  const w = (u, h) => wallPoint(side, u, h, origin);
+  const seed = u0 * 7 + h0 + (side === 'left' ? 100 : 0);
+  if (alongU) woodGrain(ctx, w(u0, h0), w(u0, h1), w(u1, h0), w(u1, h1), count, seed, P.woodGrain);
+  else woodGrain(ctx, w(u0, h0), w(u1, h0), w(u0, h1), w(u1, h1), count, seed, P.woodGrain);
+}
+
+/** Clay plaster: faint specks, and a little darker up under the roof. */
+function plasterTexture(ctx, side, origin, u0, u1, h0, h1) {
+  const lo = wallPoint(side, u0, h0, origin);
+  const hi = wallPoint(side, u0, h1, origin);
+  const g = ctx.createLinearGradient(lo.x, lo.y, hi.x, hi.y);
+  g.addColorStop(0, P.clear);
+  g.addColorStop(1, P.cornerShade);
+  wallQuad(ctx, side, origin, u0, u1, h0, h1, g);
+  ctx.fillStyle = P.plasterSpeck;
+  for (let i = 0; i < (u1 - u0) * 10; i++) {
+    const p = wallPoint(side, u0 + hash(u0, i, 4) * (u1 - u0), h0 + hash(u0, i, 5) * (h1 - h0), origin);
+    ctx.fillRect(p.x, p.y, 1, 1);
+  }
 }
 
 function wallLine(ctx, side, origin, u0, h0, u1, h1) {
@@ -102,6 +125,17 @@ function drawWallRun(ctx, room, origin, { side, u0, u1, base }) {
   wallQuad(ctx, side, origin, u0, u1, base, base + KICK, P.wood);
   wallQuad(ctx, side, origin, u0, u1, railHigh, top, P.plaster);
   wallQuad(ctx, side, origin, u0, u1, railLow, railHigh, P.woodDark);
+  if (DETAIL >= 3) {
+    wallGrain(ctx, side, origin, u0, u1, base, base + KICK, true, 6);
+    plasterTexture(ctx, side, origin, u0, u1, railHigh, top - 6);
+    wallGrain(ctx, side, origin, u0, u1, railLow, railHigh, true, 3);
+    // The rail's lower edge catches the light.
+    ctx.strokeStyle = P.latticeLight;
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    wallLine(ctx, side, origin, u0, railLow + 0.5, u1, railLow + 0.5);
+    ctx.stroke();
+  }
 
   // Posts every two tiles, except where they would cut through the window
   // or the tokonoma (those have their own frames).
@@ -110,6 +144,7 @@ function drawWallRun(ctx, room, origin, { side, u0, u1, base }) {
     const inside = panels.find((p) => u > p.u0 && u < p.u1);
     if (inside && (inside.kind === 'window' || inside.kind === 'tokonoma')) continue;
     wallQuad(ctx, side, origin, u - 0.08, u, base, top, P.woodDark);
+    if (DETAIL >= 3) wallGrain(ctx, side, origin, u - 0.08, u, base, top, false, 2);
   }
   wallQuad(ctx, side, origin, u0, u1, top - 6, top, P.woodDark);
 }
@@ -159,6 +194,22 @@ const PANELS = {
 
   fusuma(ctx, side, origin, u0, u1, h0, h1) {
     wallQuad(ctx, side, origin, u0, u1, h0, h1, P.fusuma);
+    if (DETAIL >= 3) {
+      // A far, paler range behind the main one gives the painting depth,
+      // and flecks of gold leaf catch the light.
+      const far = (u) => h0 + (h1 - h0) * (0.72 + 0.12 * Math.sin(u * 3.3 + 1) + 0.05 * Math.sin(u * 9.1));
+      const ridge = [wallPoint(side, u0, h0 + 8, origin)];
+      for (let u = u0; u <= u1 + 0.001; u += 0.1) ridge.push(wallPoint(side, u, far(u), origin));
+      ridge.push(wallPoint(side, u1, h0 + 8, origin));
+      ctx.globalAlpha = 0.45;
+      fillPolygon(ctx, ridge, P.fusumaInk);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = P.goldFleck;
+      for (let i = 0; i < (u1 - u0) * 16; i++) {
+        const p = wallPoint(side, u0 + hash(u0, i, 8) * (u1 - u0), h0 + 4 + hash(u0, i, 9) * 30, origin);
+        ctx.fillRect(p.x, p.y, 1.5, 1);
+      }
+    }
 
     // A painted range of misty mountains running across all the doors.
     // Using the wall's u as the x position keeps the painting continuous.

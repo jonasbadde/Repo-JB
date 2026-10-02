@@ -91,6 +91,17 @@ const ITEMS = {
     ctx.beginPath();
     ctx.ellipse(c.x, c.y - 9, 8, 9, 0, 0, Math.PI * 2);
     ctx.fill();
+    if (DETAIL >= 3) {
+      // Glaze: darker underneath, a bright highlight where the light hits.
+      const g = ctx.createRadialGradient(c.x + 3, c.y - 13, 1, c.x, c.y - 9, 10);
+      g.addColorStop(0, P.glazeShine);
+      g.addColorStop(0.35, P.clear);
+      g.addColorStop(1, P.cornerShade);
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.ellipse(c.x, c.y - 9, 8, 9, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     ctx.strokeStyle = P.woodDark;
     ctx.lineWidth = 1.5;

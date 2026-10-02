@@ -33,6 +33,9 @@ export const PALETTE = {
   woodLight: '#9a6a48',
   floorSlab: '#5a3a28',
   plasterShade: '#cdb68c', // inside the tokonoma alcove
+  plasterSpeck: 'rgba(120, 95, 60, 0.25)',
+  goldFleck: 'rgba(235, 200, 110, 0.75)', // gold leaf on the fusuma
+  glazeShine: 'rgba(255, 250, 235, 0.75)',
 
   // Sliding fusuma doors: thick paper with an ink-and-gold mountain painting.
   fusuma: '#efe4c8',
