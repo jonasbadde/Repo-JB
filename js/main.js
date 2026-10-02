@@ -1,15 +1,16 @@
 // Entry point: sets up the canvas, tracks the mouse and redraws every frame.
 import { gridToScreen, tileCorners, pointInPolygon } from './iso.js';
-import { createRoom, tilesInDrawOrder, AREA_NAMES } from './room.js';
+import { createRoom, tilesInDrawOrder, tileAt, AREA_NAMES } from './room.js';
 import { drawBackdrop } from './scenery.js';
 import { drawScene } from './renderer.js';
 import { createCamera, attachCamera, followPoint } from './camera.js';
 import { ROOF_DEPTH, ROOF_RISE } from './wallRenderer.js';
 import { MARGIN, SOIL } from './ground.js';
-import { DECOR } from './decor.js';
 import { lightPosition } from './decorRenderer.js';
 import { drawLighting } from './lighting.js';
 import { createAvatar, walkTo, updateAvatar } from './avatar.js';
+import { createFurnitureEditor } from './furnitureUI.js';
+import { loadLayout } from './furniture.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -17,8 +18,11 @@ const hud = document.getElementById('hud');
 const timeButton = document.getElementById('time-toggle');
 
 const room = createRoom();
+const START = { gx: 9, gy: 1 }; // the avatar starts in the genkan, by the door
+loadLayout(room, [START]); // furniture as the player left it last time
 const camera = createCamera();
-const avatar = createAvatar(room, 9, 1); // in the genkan, by the door
+const avatar = createAvatar(room, START.gx, START.gy);
+const editor = createFurnitureEditor(room, avatar);
 const state = {
   centred: { x: 0, y: 0 }, // where grid (0,0) lands when the building is centred
   origin: { x: 0, y: 0 }, // the same, after scrolling (centred + camera)
@@ -114,7 +118,14 @@ canvas.addEventListener('pointerleave', () => {
   state.mouse = null;
 });
 attachCamera(canvas, camera, cameraLimits, (point) => {
-  const tile = pickTile(point);
+  // Clicking furniture opens its menu. Only a cushion also makes the
+  // avatar walk over (to sit on it); the table and lanterns are just
+  // selected, so the avatar doesn't wander into the spot you're arranging.
+  // While moving furniture, a click puts it down instead.
+  if (editor.click(point, state.origin)) return;
+  const item = editor.edit.selected;
+  if (item && item.type !== 'cushion') return;
+  const tile = item ? tileAt(room, item.gx, item.gy) : pickTile(point);
   const tiles = tile && walkTo(avatar, room, tile);
   if (tiles) state.plan = { tiles, shownAt: performance.now() };
   camera.follow = true;
@@ -147,17 +158,31 @@ function frame(time) {
   // Picking every frame (not only on mousemove) keeps the highlight right
   // when the view scrolls under a still mouse.
   state.hovered = state.mouse ? pickTile(state.mouse) : null;
+  editor.update(state.origin, state.hovered);
+  if (!camera.drag?.moved) {
+    const overItem = state.mouse && !editor.edit.moving && editor.pick(state.mouse, state.origin);
+    canvas.style.cursor = editor.edit.moving ? 'move' : overItem ? 'pointer' : '';
+  }
 
   drawBackdrop(ctx, w, h, state.dusk);
-  drawScene(ctx, room, state.origin, { hovered: state.hovered, time, avatar, dots: pathDots(time) });
-  const lights = DECOR.filter((item) => item.glow).map((item) => ({
+  drawScene(ctx, room, state.origin, {
+    hovered: state.hovered,
+    time,
+    avatar,
+    dots: pathDots(time),
+    selected: editor.edit.selected,
+    ghost: editor.edit.ghost,
+  });
+  const lights = room.items.filter((item) => item.glow).map((item) => ({
     ...lightPosition(room, item, state.origin),
     glow: item.glow,
   }));
   drawLighting(ctx, w, h, lights, state.dusk, time);
 
   const t = state.hovered;
-  hud.textContent = t ? `${AREA_NAMES[t.area]} · tile (${t.gx}, ${t.gy})${t.walkable ? '' : ' · blocked'}` : 'hover a tile';
+  hud.textContent =
+    editor.hudText(time) ??
+    (t ? `${AREA_NAMES[t.area]} · tile (${t.gx}, ${t.gy})${t.walkable ? '' : ' · blocked'}` : 'hover a tile');
   requestAnimationFrame(frame);
 }
 

@@ -7,10 +7,15 @@ import { gridToScreen } from './iso.js';
 import { tileAt } from './room.js';
 import { fillPolygon, line } from './draw.js';
 import { PALETTE as P } from './palette.js';
+import { itemSize } from './decor.js';
 
 export function drawItem(ctx, room, item, origin) {
-  const floor = tileAt(room, item.gx, item.gy).height;
-  ITEMS[item.type](ctx, item, origin, floor);
+  drawItemAt(ctx, item, origin, tileAt(room, item.gx, item.gy).height);
+}
+
+/** Draw an item standing on a floor `floor` pixels high (also used for icons and ghosts). */
+export function drawItemAt(ctx, item, origin, floor) {
+  ITEMS[item.type](ctx, { ...item, ...itemSize(item) }, origin, floor);
 }
 
 /**

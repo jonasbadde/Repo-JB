@@ -16,6 +16,7 @@ canvas {
 /* The three little panels share one look. */
 #hud,
 #time-toggle,
+#reset-room,
 #help {
   position: fixed;
   padding: 6px 12px;
@@ -24,6 +25,84 @@ canvas {
   background: rgba(59, 36, 24, 0.75);
   color: #f4ecd8;
   font: 14px/1.4 Georgia, "Hiragino Mincho ProN", serif;
+}
+
+/* Menu over the selected furniture. Its left/top is the point above the
+   item, so it is shifted up and left by its own size to sit centred on it. */
+#furni-menu {
+  position: fixed;
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 6px;
+  background: rgba(59, 36, 24, 0.85);
+  transform: translate(-50%, -100%);
+}
+
+#furni-menu[hidden] {
+  display: none;
+}
+
+#furni-menu button {
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 4px;
+  background: rgba(244, 236, 216, 0.15);
+  color: #f4ecd8;
+  font: 13px/1.4 Georgia, "Hiragino Mincho ProN", serif;
+  cursor: pointer;
+}
+
+#furni-menu button:hover {
+  background: rgba(244, 236, 216, 0.3);
+}
+
+#furni-menu button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* The tray of picked-up furniture: an indigo furoshiki cloth along the bottom. */
+#tray {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(43, 54, 94, 0.88);
+  color: #f4ecd8;
+  font: 13px/1.4 Georgia, "Hiragino Mincho ProN", serif;
+  transform: translateX(-50%);
+}
+
+#tray[hidden] {
+  display: none;
+}
+
+.tray-items {
+  display: flex;
+  gap: 6px;
+}
+
+.tray-items button {
+  padding: 0;
+  border: 1px solid rgba(244, 236, 216, 0.25);
+  border-radius: 6px;
+  background: rgba(244, 236, 216, 0.12);
+  cursor: pointer;
+}
+
+.tray-items button:hover {
+  background: rgba(244, 236, 216, 0.28);
+}
+
+.tray-items canvas {
+  display: block;
+  width: 72px;
+  height: 56px;
 }
 
 #hud {
@@ -38,7 +117,14 @@ canvas {
   cursor: pointer;
 }
 
-#time-toggle:hover {
+#reset-room {
+  right: 16px;
+  top: 60px;
+  cursor: pointer;
+}
+
+#time-toggle:hover,
+#reset-room:hover {
   background: rgba(59, 36, 24, 0.9);
 }
 
@@ -53,5 +139,9 @@ canvas {
 @media (max-width: 600px) {
   #help {
     display: none; /* not enough room on a phone */
+  }
+
+  #tray {
+    bottom: 60px; /* above the HUD */
   }
 }
