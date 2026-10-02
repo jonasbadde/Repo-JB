@@ -13,6 +13,8 @@ import { drawGround, frontFences } from './ground.js';
 import { drawItem, drawItemAt } from './decorRenderer.js';
 import { drawAvatar, drawPathDot } from './avatarRenderer.js';
 import { avatarDepth } from './avatar.js';
+import { addAmbience, drawLightBeams } from './ambience.js';
+import { DETAIL } from './detail.js';
 import { itemTiles, FACING } from './decor.js';
 import { fillPolygon, strokePolygon } from './draw.js';
 import { PALETTE as P } from './palette.js';
@@ -27,7 +29,7 @@ const ORDER = { tile: 0, highlight: 0.1, object: 0.6, avatar: 0.7, wall: 0.8 };
  * Extra things to draw: `selected` is the furniture whose menu is open,
  * `ghost` = { item, gx, gy, rot, ok } is furniture being moved.
  */
-export function drawScene(ctx, room, origin, { hovered, time, avatar, dots = [], selected = null, ghost = null }) {
+export function drawScene(ctx, room, origin, { hovered, time, avatar, dots = [], selected = null, ghost = null, dusk = 0 }) {
   // Things that are behind everything else don't need sorting.
   drawGround(ctx, room, origin);
   drawBackWalls(ctx, room, origin);
@@ -46,6 +48,7 @@ export function drawScene(ctx, room, origin, { hovered, time, avatar, dots = [],
     const front = Math.max(...itemTiles(item).map((t) => t.gx + t.gy));
     list.push({ depth: front + ORDER.object, draw: () => drawItem(ctx, room, item, origin) });
   }
+  if (DETAIL >= 2) addAmbience(list, ctx, room, origin, dusk);
   for (const fence of frontFences(room, origin)) list.push({ depth: fence.depth, draw: () => fence.draw(ctx) });
   list.push({ depth: 7 + ORDER.wall + 0.1, draw: () => drawEavePost(ctx, room, origin) });
   list.push({ depth: avatarDepth(avatar) + ORDER.avatar, draw: () => drawAvatar(ctx, avatar, origin) });
@@ -70,6 +73,7 @@ export function drawScene(ctx, room, origin, { hovered, time, avatar, dots = [],
   // sort() keeps equal depths in the order they were added.
   list.sort((a, b) => a.depth - b.depth);
   for (const item of list) item.draw();
+  if (DETAIL >= 3) drawLightBeams(ctx, room, origin, dusk, time);
 }
 
 /** gx + gy of an item's front-most tile. */

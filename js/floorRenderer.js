@@ -4,6 +4,7 @@ import { TILE_W, gridToScreen, tileCorners } from './iso.js';
 import { tileAt } from './room.js';
 import { fillPolygon, strokePolygon, lerp, line, hash } from './draw.js';
 import { PALETTE as P } from './palette.js';
+import { DETAIL } from './detail.js';
 
 export function drawTile(ctx, room, tile, origin, time) {
   drawSides(ctx, room, tile, origin);
@@ -72,7 +73,9 @@ function drawPost(ctx, along, origin, base, top, parity) {
 // Top surfaces, one function per floor type.
 
 const TOPS = {
-  tatami(ctx, { gx, gy }, corners) {
+  tatami(ctx, tile, corners, origin, room) {
+    if (DETAIL >= 1) return drawDetailedTatami(ctx, tile, corners, room);
+    const { gx, gy } = tile;
     fillPolygon(ctx, corners, (gx + gy) % 2 ? P.tatamiAlt : P.tatami);
 
     // Woven-straw texture: a few lines parallel to one pair of edges.
@@ -193,6 +196,73 @@ const TOPS = {
     }
   },
 };
+
+/**
+ * A tatami mat with its woven straw, the cloth border (heri) along its long
+ * sides, light falling from the right and paler patches where people walk.
+ */
+function drawDetailedTatami(ctx, { gx, gy }, corners, room) {
+  const [top, right, bottom, left] = corners;
+  const mat = DETAIL >= 3 ? matAt(room, gx, gy) : { alongX: !((gx + gy) % 2), ends: [true, true] };
+  const alt = mat.alongX ? 0 : 1;
+  const sun = ctx.createLinearGradient(left.x, left.y, right.x, right.y);
+  sun.addColorStop(0, alt ? P.tatamiAlt : P.tatami);
+  sun.addColorStop(1, P.tatamiLight);
+  fillPolygon(ctx, corners, sun);
+
+  // Mats are laid in alternating directions. a0-a1 and b0-b1 are the long
+  // sides; the straw runs along them.
+  const [a0, a1, b0, b1] = alt ? [top, left, right, bottom] : [top, right, left, bottom];
+  if (hash(gx, gy, 5) > 0.7) {
+    const c = lerp(lerp(a0, b1, 0.5), lerp(a1, b0, 0.5), 0.3 + hash(gx, gy, 6) * 0.4);
+    ctx.fillStyle = P.tatamiWorn;
+    ctx.beginPath();
+    ctx.ellipse(c.x, c.y, 11, 4.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.strokeStyle = P.tatamiWeave;
+  ctx.lineWidth = 0.6;
+  ctx.beginPath();
+  for (let t = 0.1; t < 0.92; t += 0.055) line(ctx, lerp(a0, b0, t), lerp(a1, b1, t));
+  ctx.stroke();
+
+  // Heri: a dark cloth band with a woven pattern down its middle.
+  ctx.lineWidth = 1;
+  for (const [p0, p1, q0, q1] of [[a0, a1, b0, b1], [b0, b1, a0, a1]]) {
+    const in0 = lerp(p0, q0, 0.07);
+    const in1 = lerp(p1, q1, 0.07);
+    fillPolygon(ctx, [p0, p1, in1, in0], P.tatamiEdge);
+    ctx.strokeStyle = P.heriPattern;
+    ctx.setLineDash([2, 2]);
+    ctx.beginPath();
+    line(ctx, lerp(p0, in0, 0.5), lerp(p1, in1, 0.5));
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  // The short ends of the mat: a fine dark seam (not where the two halves
+  // of one mat meet in the middle).
+  ctx.strokeStyle = P.woodGrain;
+  ctx.beginPath();
+  if (mat.ends[0]) line(ctx, a0, b0);
+  if (mat.ends[1]) line(ctx, a1, b1);
+  ctx.stroke();
+}
+
+/**
+ * Real tatami are twice as long as wide. Here each mat covers two tiles,
+ * laid in the classic pattern of 2x2 blocks that alternate direction, so
+ * no four corners ever meet. A mat cut short by the tokonoma or a wall is
+ * a half mat. Returns { alongX, ends: [start end?, far end?] } for a tile.
+ */
+function matAt(room, gx, gy) {
+  const alongX = (Math.floor(gx / 2) + Math.floor(gy / 2)) % 2 === 0;
+  const first = alongX ? gx % 2 === 0 : gy % 2 === 0;
+  const [px, py] = alongX ? [gx + (first ? 1 : -1), gy] : [gx, gy + (first ? 1 : -1)];
+  const partner = tileAt(room, px, py);
+  const whole = partner && partner.floor === 'tatami';
+  // ends[0] is the edge at the lower gx (or gy), ends[1] the higher one.
+  return { alongX, ends: whole ? (first ? [true, false] : [false, true]) : [true, true] };
+}
 
 function drawMoss(ctx, { gx, gy }, corners, room) {
   fillPolygon(ctx, corners, hash(gx, gy, 1) > 0.5 ? P.moss : P.mossAlt);

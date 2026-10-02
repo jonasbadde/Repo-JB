@@ -8,8 +8,9 @@ import { TILE_W, TILE_H, gridToScreen } from './iso.js';
 import { tileAt } from './room.js';
 import { WALL_PANELS } from './decor.js';
 import { drawWindowView } from './scenery.js';
-import { fillPolygon, line } from './draw.js';
+import { fillPolygon, line, hash } from './draw.js';
 import { PALETTE as P } from './palette.js';
+import { DETAIL } from './detail.js';
 
 const KICK = 24; // wooden kick panel at the bottom of a wall, above its floor
 const RAIL_DROP = 38; // the horizontal beam (nageshi) sits this far below the wall top
@@ -113,10 +114,29 @@ function drawWallRun(ctx, room, origin, { side, u0, u1, base }) {
   wallQuad(ctx, side, origin, u0, u1, top - 6, top, P.woodDark);
 }
 
+/** Washi paper: brighter where daylight comes through the middle, with fibres. */
+function shojiPaper(ctx, side, origin, u0, u1, h0, h1) {
+  const lo = wallPoint(side, (u0 + u1) / 2, h0, origin);
+  const hi = wallPoint(side, (u0 + u1) / 2, h1, origin);
+  const glow = ctx.createLinearGradient(lo.x, lo.y, hi.x, hi.y);
+  glow.addColorStop(0, P.clear);
+  glow.addColorStop(0.55, P.latticeLight);
+  glow.addColorStop(1, P.clear);
+  ctx.globalAlpha = 0.5;
+  wallQuad(ctx, side, origin, u0, u1, h0, h1, glow);
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = P.paperFibre;
+  for (let i = 0; i < (u1 - u0) * 14; i++) {
+    const p = wallPoint(side, u0 + hash(u0, i, 1) * (u1 - u0), h0 + hash(u0, i, 2) * (h1 - h0), origin);
+    ctx.fillRect(p.x, p.y, 2, 0.7);
+  }
+}
+
 // One function per kind of wall panel. Each fills [u0,u1] x [h0,h1].
 const PANELS = {
   shoji(ctx, side, origin, u0, u1, h0, h1) {
     wallQuad(ctx, side, origin, u0, u1, h0, h1, side === 'left' ? P.shojiShade : P.shoji);
+    if (DETAIL >= 1) shojiPaper(ctx, side, origin, u0, u1, h0, h1);
     // Kumiko lattice: thin wooden strips over the paper.
     ctx.strokeStyle = P.wood;
     ctx.lineWidth = 1;
@@ -124,6 +144,17 @@ const PANELS = {
     for (let u = u0 + 0.5; u < u1; u += 0.5) wallLine(ctx, side, origin, u, h0, u, h1);
     for (let h = h0 + 22; h < h1; h += 22) wallLine(ctx, side, origin, u0, h, u1, h);
     ctx.stroke();
+    if (DETAIL >= 1) {
+      // Each strip catches the light on one edge, which makes it read as wood.
+      ctx.strokeStyle = P.latticeLight;
+      ctx.lineWidth = 0.6;
+      ctx.beginPath();
+      for (let u = u0 + 0.5; u < u1; u += 0.5) wallLine(ctx, side, origin, u + 0.02, h0, u + 0.02, h1);
+      for (let h = h0 + 22; h < h1; h += 22) wallLine(ctx, side, origin, u0, h + 1, u1, h + 1);
+      ctx.stroke();
+      // Heavier frame where one sliding panel meets the next.
+      for (let u = Math.ceil(u0); u <= u1; u += 1) wallQuad(ctx, side, origin, u - 0.04, u, h0, h1, P.wood);
+    }
   },
 
   fusuma(ctx, side, origin, u0, u1, h0, h1) {

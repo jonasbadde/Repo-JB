@@ -18,9 +18,15 @@ export const PALETTE = {
   tatamiAlt: '#c4b972',
   tatamiWeave: 'rgba(110, 100, 40, 0.18)',
   tatamiEdge: '#3f5a3a', // the green cloth border ("heri")
+  tatamiLight: '#dcd291', // sunny side of a mat
+  heriPattern: 'rgba(225, 215, 160, 0.35)', // woven pattern on the heri
+  tatamiWorn: 'rgba(255, 250, 220, 0.12)', // paler patches where people walk
 
   shoji: '#f6efdc',
   shojiShade: '#e9dfc6', // left wall is a little darker (light comes from the right)
+  paperFibre: 'rgba(150, 125, 85, 0.13)', // fibres in washi paper
+  latticeLight: 'rgba(255, 244, 220, 0.6)', // lit edge of a lattice strip
+  clear: 'rgba(255, 244, 220, 0)', // fully see-through, for the ends of gradients
   plaster: '#d9c39a',
   wood: '#6b4430',
   woodDark: '#3b2418',
@@ -74,6 +80,11 @@ export const PALETTE = {
 
   // Furniture and garden objects.
   lacquer: '#4a2a1f', // low table top
+  lacquerShine: 'rgba(255, 228, 200, 0.22)', // reflection on the lacquer
+  woodGrain: 'rgba(30, 15, 8, 0.22)',
+  cushionLight: '#a65e6e', // the puffed-up middle of a cushion
+  cushionSeam: 'rgba(55, 18, 28, 0.45)',
+  thread: '#e8d9b0', // the tie in the middle of a zabuton
   cushion: '#8e4b5a',
   cushionSide: '#6e3846',
   vase: '#3e5c6b',
@@ -112,6 +123,20 @@ export const PALETTE = {
   hairTie: '#d9b866',
   eye: '#2f2a26',
   pathDot: '#fff3c4', // the planned walk, shown briefly on the floor
+
+  // Light and small life (detail level 2).
+  contactShadow: 'rgba(40, 25, 15, 0.35)', // soft shadow right under furniture
+  cornerShade: 'rgba(40, 25, 15, 0.22)', // where floor meets wall
+  sunPatch: 'rgba(255, 238, 190, 0.32)', // daylight through the shoji
+  sunBeam: 'rgba(255, 236, 190, 0.16)', // daylight hanging in the air
+  dust: 'rgba(255, 246, 220, 0.8)',
+  steam: 'rgba(255, 255, 250, 0.35)',
+  grainLight: '#fff8e6',
+  grainDark: '#3b2418',
+  teapot: '#5b4636',
+  teapotShine: 'rgba(255, 230, 200, 0.35)',
+  teacup: '#efe6d2',
+  tea: '#8c8a3c',
 
   // Moving furniture: the footprint shows where it can (or can't) go.
   placeOk: 'rgba(150, 205, 120, 0.45)',
